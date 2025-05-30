@@ -12,7 +12,6 @@ ARG MAVEN_CENTRAL="https://repo1.maven.org/maven2"
 # 安装必要的工具
 RUN apk add --no-cache \
     curl \
-    netstat-nat \
     procps \
     tzdata
 
