@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  overflow:
+    image: sdjnmxd/overflow:latest
+    container_name: overflow
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./plugins:/app/plugins
+    environment:
+      - TZ=Asia/Shanghai
+      # JVM 参数
+      - JAVA_OPTS=-Xms512M -Xmx1G
+      # Overflow 参数
+      - OVERFLOW_CONFIG=/app/config/overflow.json
+      - OVERFLOW_TIMEOUT=${OVERFLOW_TIMEOUT:-10000}
+      - OVERFLOW_TIMEOUT_PROCESS=${OVERFLOW_TIMEOUT_PROCESS:-20000}
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s 
