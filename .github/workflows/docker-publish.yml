@@ -55,7 +55,7 @@ jobs:
             echo "::error::Failed to fetch Mirai release information"
             exit 1
           fi
-          
+
           LATEST_OVERFLOW=$(echo "$OVERFLOW_INFO" | jq -r '.tag_name' | sed 's/^v//')
           LATEST_MIRAI=$(echo "$MIRAI_INFO" | jq -r '.tag_name' | sed 's/^v//')
           RELEASE_DATE=$(echo "$OVERFLOW_INFO" | jq -r '.published_at')
