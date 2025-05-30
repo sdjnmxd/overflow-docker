@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:11-jdk-slim
 
 # 设置工作目录
 WORKDIR /app
