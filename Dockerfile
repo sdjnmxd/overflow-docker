@@ -3,6 +3,9 @@ FROM openjdk:8-jdk-alpine
 # 设置工作目录
 WORKDIR /app
 
+# 复制README和LICENSE文件
+COPY README.md LICENSE ./
+
 # 设置版本参数
 ARG OVERFLOW_VERSION
 ARG MIRAI_CONSOLE_VERSION

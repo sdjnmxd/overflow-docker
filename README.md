@@ -132,4 +132,6 @@ docker-compose restart
 
 本项目采用 MIT License 开源，详细信息请参阅 [LICENSE](LICENSE) 文件。
 
-Overflow Docker 是一个独立项目，仅提供容器化部署方案。Overflow 和 Mirai 的所有权利归其原作者所有，详见 [Overflow 官方仓库](https://github.com/MrXiaoM/Overflow)。 
+Overflow Docker 是一个独立项目，仅提供容器化部署方案。上游项目使用以下许可证：
+- [Overflow](https://github.com/MrXiaoM/Overflow) 采用 [AGPL-3.0 License](https://github.com/MrXiaoM/Overflow/blob/main/LICENSE)，所有权利归原作者所有
+- [Mirai](https://github.com/mamoe/mirai) 采用 [AGPL-3.0 License](https://github.com/mamoe/mirai/blob/dev/LICENSE)，所有权利归原作者所有
