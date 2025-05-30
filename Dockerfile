@@ -1,4 +1,4 @@
-FROM openjdk:11-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 
 # 设置工作目录
 WORKDIR /app
@@ -13,10 +13,11 @@ ARG BOUNCY_CASTLE_VERSION=1.64
 ARG MAVEN_CENTRAL="https://repo1.maven.org/maven2"
 
 # 安装必要的工具
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     curl \
     procps \
-    tzdata
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
 # 创建目录
 RUN mkdir -p /app/content /app/data /app/config /app/plugins
