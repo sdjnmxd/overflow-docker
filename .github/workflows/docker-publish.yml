@@ -21,14 +21,11 @@ on:
 permissions:
   contents: write
   packages: write
-  id-token: write
-  attestations: write
 
 env:
   IMAGE_NAME: overflow
   UPSTREAM_REPO: MrXiaoM/Overflow
   MIRAI_REPO: mamoe/mirai
-  DOCKERHUB_USERNAME: sdjnmxd
 
 jobs:
   check-update:
@@ -66,7 +63,7 @@ jobs:
           CHANGELOG=$(echo "$OVERFLOW_INFO" | jq -r '.body')
           
           # 获取 Docker Hub 当前版本（跳过 latest 标签）
-          if ! CURRENT_VERSION=$(curl -sf "https://hub.docker.com/v2/repositories/${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}/tags/" | \
+          if ! CURRENT_VERSION=$(curl -sf "https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}/tags/" | \
             jq -r '.results[] | select(.name != "latest") | .name' | head -n1); then
             echo "::warning::Failed to fetch Docker Hub version, assuming first build"
             CURRENT_OVERFLOW="0.0.0"
@@ -189,15 +186,14 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64
           push: true
           build-args: |
             OVERFLOW_VERSION=${{ steps.versions.outputs.overflow_version }}
@@ -205,28 +201,18 @@ jobs:
             BOUNCY_CASTLE_VERSION=1.64
             BUILDKIT_INLINE_CACHE=1
           tags: |
-            ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.versions.outputs.overflow_version }}-mirai.${{ steps.versions.outputs.mirai_version }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.versions.outputs.overflow_version }}-mirai.${{ steps.versions.outputs.mirai_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          provenance: true
-          sbom: true
-
-      - name: Generate artifact attestation
-        if: success()
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
 
       - name: Update Docker Hub Description
         if: success()
         uses: peter-evans/dockerhub-description@v4
         with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
           readme-filepath: ./README.md
           short-description: ${{ github.event.repository.description }}
           enable-url-completion: true
@@ -257,10 +243,10 @@ jobs:
             ## Docker 镜像
             ```bash
             # 最新版本
-            docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.versions.outputs.overflow_version }}-mirai.${{ steps.versions.outputs.mirai_version }}
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.versions.outputs.overflow_version }}-mirai.${{ steps.versions.outputs.mirai_version }}
             
             # 或使用 latest 标签
-            docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ```
             
             ## 更新说明
