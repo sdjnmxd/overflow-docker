@@ -13,12 +13,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制健康检查脚本
-COPY healthcheck.sh /healthcheck.sh
-RUN chmod +x /healthcheck.sh
-
 # 创建必要的目录
-RUN mkdir -p data config plugins mcl
+RUN mkdir -p mcl
 
 # 下载并安装MCL
 WORKDIR /app/mcl
@@ -37,15 +33,11 @@ COPY start.sh .
 RUN chmod +x start.sh
 
 # 设置数据卷
-VOLUME ["/app/data", "/app/config", "/app/plugins"]
+VOLUME ["/app/mcl/data", "/app/mcl/config", "/app/mcl/plugins", "/app/mcl/plugin-libraries", "/app/mcl/logs"]
 
 # 设置环境变量
 ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"
 ENV LANG=C.UTF-8
-
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD /healthcheck.sh
 
 # 启动命令
 CMD ["./start.sh"]
