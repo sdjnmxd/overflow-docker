@@ -9,18 +9,12 @@ services:
       - ./plugins:/app/mcl/plugins
       - ./plugin-libraries:/app/mcl/plugin-libraries
       - ./logs:/app/mcl/logs
-      # 提供默认的overflow配置
       - ./overflow.json:/app/mcl/overflow.json
     environment:
       # Java 配置
       - JAVA_OPTS=${JAVA_OPTS:--Xms512M -Xmx1G}
       # 时区配置
       - TZ=${TZ:-Asia/Shanghai}
-      # WebSocket配置
-      - WS_HOST=${WS_HOST:-0.0.0.0}
-      - WS_PORT=${WS_PORT:-3001}
-    ports:
-      - "${WS_PORT:-3001}:3001"
     restart: unless-stopped
     logging:
       driver: "json-file"
