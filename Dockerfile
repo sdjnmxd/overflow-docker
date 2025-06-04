@@ -23,7 +23,7 @@ RUN mkdir -p data config plugins mcl
 # 下载并安装MCL
 WORKDIR /app/mcl
 RUN wget --no-check-certificate --progress=bar:force:noscroll \
-    https://ghfast.top/https://github.com/MrXiaoM/mirai-console-loader/releases/download/v2.1.2-patch1/with-overflow.zip \
+    https://github.com/MrXiaoM/mirai-console-loader/releases/download/v2.1.2-patch1/with-overflow.zip \
     -O with-overflow.zip \
     && unzip with-overflow.zip \
     && rm with-overflow.zip \
