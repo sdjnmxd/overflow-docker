@@ -46,14 +46,18 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       needs_update: ${{ steps.check.outputs.needs_update }}
-      overflow_version: ${{ steps.check.outputs.overflow_version }}
-      mirai_version: ${{ steps.check.outputs.mirai_version }}
+      new_overflow_version: ${{ steps.check.outputs.new_overflow_version }}
+      new_mirai_version: ${{ steps.check.outputs.new_mirai_version }}
+      current_overflow_version: ${{ steps.check.outputs.current_overflow_version }}
+      current_mirai_version: ${{ steps.check.outputs.current_mirai_version }}
       bouncycastle_version: ${{ steps.check.outputs.bouncycastle_version }}
       maven_repo: ${{ steps.check.outputs.maven_repo }}
-      current_version: ${{ steps.check.outputs.current_version }}
       release_date: ${{ steps.check.outputs.release_date }}
       release_url: ${{ steps.check.outputs.release_url }}
+      mirai_release_date: ${{ steps.check.outputs.mirai_release_date }}
+      mirai_release_url: ${{ steps.check.outputs.mirai_release_url }}
       changelog: ${{ steps.check.outputs.changelog }}
+      mirai_changelog: ${{ steps.check.outputs.mirai_changelog }}
     steps:
       - name: Get latest versions
         id: check
@@ -158,22 +162,24 @@ jobs:
           fi
           
           # 输出版本信息
-          echo "new_overflow_version=${NEW_OVERFLOW_VERSION}" >> $GITHUB_OUTPUT
-          echo "new_mirai_version=${NEW_MIRAI_VERSION}" >> $GITHUB_OUTPUT
-          echo "current_overflow_version=${CURRENT_OVERFLOW_VERSION}" >> $GITHUB_OUTPUT
-          echo "current_mirai_version=${CURRENT_MIRAI_VERSION}" >> $GITHUB_OUTPUT
-          echo "bouncycastle_version=${BOUNCYCASTLE_VERSION}" >> $GITHUB_OUTPUT
-          echo "maven_repo=${MAVEN_REPO}" >> $GITHUB_OUTPUT
-          echo "release_date=${RELEASE_DATE}" >> $GITHUB_OUTPUT
-          echo "release_url=${RELEASE_URL}" >> $GITHUB_OUTPUT
-          echo "mirai_release_date=${MIRAI_RELEASE_DATE}" >> $GITHUB_OUTPUT
-          echo "mirai_release_url=${MIRAI_RELEASE_URL}" >> $GITHUB_OUTPUT
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "mirai_changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$MIRAI_CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "new_overflow_version=${NEW_OVERFLOW_VERSION}"
+            echo "new_mirai_version=${NEW_MIRAI_VERSION}"
+            echo "current_overflow_version=${CURRENT_OVERFLOW_VERSION}"
+            echo "current_mirai_version=${CURRENT_MIRAI_VERSION}"
+            echo "bouncycastle_version=${BOUNCYCASTLE_VERSION}"
+            echo "maven_repo=${MAVEN_REPO}"
+            echo "release_date=${RELEASE_DATE}"
+            echo "release_url=${RELEASE_URL}"
+            echo "mirai_release_date=${MIRAI_RELEASE_DATE}"
+            echo "mirai_release_url=${MIRAI_RELEASE_URL}"
+            echo "changelog<<EOF"
+            echo "${CHANGELOG}"
+            echo "EOF"
+            echo "mirai_changelog<<EOF"
+            echo "${MIRAI_CHANGELOG}"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
           
           echo "Using Overflow version: ${NEW_OVERFLOW_VERSION}"
           echo "Using Mirai version: ${NEW_MIRAI_VERSION}"
