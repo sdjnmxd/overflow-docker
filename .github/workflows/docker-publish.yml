@@ -1,31 +1,152 @@
 name: Docker Image CI/CD
 
 on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天UTC 00:00运行
   workflow_dispatch:
     inputs:
-      version:
-        description: '版本号（可选，默认使用git hash）'
+      overflow_version:
+        description: 'Overflow版本号（可选，默认使用最新版本）'
         required: false
         type: string
+      mirai_version:
+        description: 'Mirai版本号（可选，默认使用最新版本）'
+        required: false
+        type: string
+      bouncycastle_version:
+        description: 'BouncyCastle版本号（可选，默认使用1.64）'
+        required: false
+        type: string
+        default: '1.64'
+      maven_repo:
+        description: 'Maven仓库地址（可选，默认使用华为镜像）'
+        required: false
+        type: string
+        default: 'https://mirrors.huaweicloud.com/repository/maven'
+      create_release:
+        description: '是否创建 Release'
+        type: boolean
+        default: false
+        required: true
+      force_build:
+        description: '是否强制构建（忽略版本检查）'
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: write
+  packages: write
 
 env:
   IMAGE_NAME: overflow
 
 jobs:
+  check_versions:
+    runs-on: ubuntu-latest
+    outputs:
+      needs_update: ${{ steps.check.outputs.needs_update }}
+      overflow_version: ${{ steps.check.outputs.overflow_version }}
+      mirai_version: ${{ steps.check.outputs.mirai_version }}
+      bouncycastle_version: ${{ steps.check.outputs.bouncycastle_version }}
+      maven_repo: ${{ steps.check.outputs.maven_repo }}
+      current_version: ${{ steps.check.outputs.current_version }}
+      release_date: ${{ steps.check.outputs.release_date }}
+      release_url: ${{ steps.check.outputs.release_url }}
+      changelog: ${{ steps.check.outputs.changelog }}
+    steps:
+      - name: Get latest versions
+        id: check
+        run: |
+          # 如果没有指定Overflow版本，则获取最新版本
+          if [ -z "${{ github.event.inputs.overflow_version }}" ]; then
+            OVERFLOW_VERSION=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.tag_name')
+            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/${OVERFLOW_VERSION}"
+            CHANGELOG=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.body')
+            RELEASE_DATE=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.published_at')
+          else
+            OVERFLOW_VERSION=${{ github.event.inputs.overflow_version }}
+            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/${OVERFLOW_VERSION}"
+            CHANGELOG="手动指定版本构建"
+            RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          fi
+          
+          # 如果没有指定Mirai版本，则获取最新版本
+          if [ -z "${{ github.event.inputs.mirai_version }}" ]; then
+            MIRAI_VERSION=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.tag_name' | sed 's/v//')
+          else
+            MIRAI_VERSION=${{ github.event.inputs.mirai_version }}
+          fi
+          
+          # 设置 BouncyCastle 版本
+          BOUNCYCASTLE_VERSION=${{ github.event.inputs.bouncycastle_version }}
+          
+          # 设置 Maven 仓库地址
+          MAVEN_REPO=${{ github.event.inputs.maven_repo }}
+          
+          # 获取 Docker Hub 当前版本
+          if ! CURRENT_VERSION=$(curl -sf "https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_USERNAME }}/overflow/tags/" | \
+            jq -r '.results[] | select(.name != "latest") | .name' | head -n1); then
+            echo "::warning::Failed to fetch Docker Hub version, assuming first build"
+            CURRENT_VERSION="0.0.0"
+          fi
+          
+          # 如果没有找到版本号（可能是首次构建）
+          if [ -z "$CURRENT_VERSION" ] || [ "$CURRENT_VERSION" == "null" ]; then
+            echo "No version found in Docker Hub, assuming first build"
+            CURRENT_VERSION="0.0.0"
+          fi
+          
+          # 比较版本
+          if [ "$OVERFLOW_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Update needed: $CURRENT_VERSION -> $OVERFLOW_VERSION"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+          else
+            echo "No update needed, current version is latest: $CURRENT_VERSION"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # 输出版本信息
+          echo "overflow_version=${OVERFLOW_VERSION}" >> $GITHUB_OUTPUT
+          echo "mirai_version=${MIRAI_VERSION}" >> $GITHUB_OUTPUT
+          echo "bouncycastle_version=${BOUNCYCASTLE_VERSION}" >> $GITHUB_OUTPUT
+          echo "maven_repo=${MAVEN_REPO}" >> $GITHUB_OUTPUT
+          echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+          echo "release_date=${RELEASE_DATE}" >> $GITHUB_OUTPUT
+          echo "release_url=${RELEASE_URL}" >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "Using Overflow version: ${OVERFLOW_VERSION}"
+          echo "Using Mirai version: ${MIRAI_VERSION}"
+          echo "Using BouncyCastle version: ${BOUNCYCASTLE_VERSION}"
+          echo "Using Maven repo: ${MAVEN_REPO}"
+
   build:
+    needs: check_versions
+    if: |
+      needs.check_versions.outputs.needs_update == 'true' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate version
-        id: version
+      - name: Update version in files
         run: |
-          if [ -z "${{ github.event.inputs.version }}" ]; then
-            echo "version=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          else
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          fi
+          VERSION="${{ needs.check_versions.outputs.overflow_version }}"
+          MIRAI_VERSION="${{ needs.check_versions.outputs.mirai_version }}"
+          
+          # 更新 README.md 中的版本信息
+          sed -i "s/Overflow Core: .*/Overflow Core: $VERSION/" README.md
+          sed -i "s/Mirai Console: .*/Mirai Console: $MIRAI_VERSION/" README.md
+          
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add README.md
+          git commit -m "chore: update versions (Overflow: $VERSION, Mirai: $MIRAI_VERSION)"
+          git push
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -41,6 +162,68 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            MAVEN_REPO=${{ needs.check_versions.outputs.maven_repo }}
+            OVERFLOW_VERSION=${{ needs.check_versions.outputs.overflow_version }}
+            MIRAI_VERSION=${{ needs.check_versions.outputs.mirai_version }}
+            BOUNCYCASTLE_VERSION=${{ needs.check_versions.outputs.bouncycastle_version }}
           tags: |
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} 
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update Docker Hub Description
+        if: success()
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          readme-filepath: ./README.md
+          short-description: ${{ github.event.repository.description }}
+          enable-url-completion: true
+
+      - name: Create Release
+        if: |
+          success() && (
+            github.event_name == 'schedule' ||
+            (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+          )
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: "v${{ needs.check_versions.outputs.overflow_version }}"
+          name: "Overflow Docker ${{ needs.check_versions.outputs.overflow_version }}"
+          body: |
+            自动更新 Overflow Docker 版本
+            
+            ## 版本信息
+            
+            - Overflow: ${{ needs.check_versions.outputs.current_version }} -> ${{ needs.check_versions.outputs.overflow_version }}
+            - Mirai: ${{ needs.check_versions.outputs.mirai_version }}
+            - BouncyCastle: ${{ needs.check_versions.outputs.bouncycastle_version }}
+            - Maven仓库: ${{ needs.check_versions.outputs.maven_repo }}
+            - 发布时间: ${{ needs.check_versions.outputs.release_date }}
+            - Release 链接: ${{ needs.check_versions.outputs.release_url }}
+            
+            ## Docker 镜像
+            ```bash
+            # 最新版本
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}
+            
+            # 或使用 latest 标签
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            ```
+            
+            ## 更新说明
+            
+            ${{ needs.check_versions.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+      - name: Update Summary
+        if: success()
+        run: |
+          echo "Docker image updated to version ${{ needs.check_versions.outputs.overflow_version }}" >> $GITHUB_STEP_SUMMARY 

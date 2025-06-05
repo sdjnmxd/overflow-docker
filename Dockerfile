@@ -1,10 +1,6 @@
 FROM eclipse-temurin:17-jdk-jammy
 
-# 设置工作目录
 WORKDIR /app
-
-# 复制README和LICENSE文件
-COPY README.md LICENSE ./
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
@@ -13,31 +9,38 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# 创建必要的目录
-RUN mkdir -p mcl
+COPY README.md LICENSE ./
 
-# 下载并安装MCL
-WORKDIR /app/mcl
-RUN wget --no-check-certificate --progress=bar:force:noscroll \
-    https://github.com/MrXiaoM/mirai-console-loader/releases/download/v2.1.2-patch1/with-overflow.zip \
-    -O with-overflow.zip \
-    && unzip with-overflow.zip \
-    && rm with-overflow.zip \
-    && chmod +x mcl
+RUN mkdir -p overflow/content
 
-# 返回主工作目录
-WORKDIR /app
+ARG MAVEN_REPO
+ARG OVERFLOW_VERSION
+ARG MIRAI_VERSION
+ARG BOUNCYCASTLE_VERSION
+# for debug
+ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
+ARG OVERFLOW_VERSION=1.0.5
+ARG MIRAI_VERSION=2.16.0
+ARG BOUNCYCASTLE_VERSION=1.64
 
-# 复制启动脚本
+RUN echo "Using Overflow version: ${OVERFLOW_VERSION}" \
+    && echo "Using Mirai version: ${MIRAI_VERSION}" \
+    && echo "Using BouncyCastle version: ${BOUNCYCASTLE_VERSION}" \
+    && cd overflow/content \
+    && wget --no-check-certificate --progress=bar:force:noscroll \
+       "${MAVEN_REPO}/top/mrxiaom/mirai/overflow-core-all/${OVERFLOW_VERSION}/overflow-core-all-${OVERFLOW_VERSION}-all.jar" \
+       "${MAVEN_REPO}/org/bouncycastle/bcprov-jdk15on/${BOUNCYCASTLE_VERSION}/bcprov-jdk15on-${BOUNCYCASTLE_VERSION}.jar" \
+       "${MAVEN_REPO}/net/mamoe/mirai-console/${MIRAI_VERSION}/mirai-console-${MIRAI_VERSION}-all.jar" \
+       "${MAVEN_REPO}/net/mamoe/mirai-console-terminal/${MIRAI_VERSION}/mirai-console-terminal-${MIRAI_VERSION}-all.jar"
+
+WORKDIR /app/overflow
+
 COPY start.sh .
 RUN chmod +x start.sh
 
-# 设置数据卷
-VOLUME ["/app/mcl/data", "/app/mcl/config", "/app/mcl/plugins", "/app/mcl/plugin-libraries", "/app/mcl/logs"]
+VOLUME ["/app/overflow/data", "/app/overflow/config", "/app/overflow/plugins", "/app/overflow/logs"]
 
-# 设置环境变量
 ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"
 ENV LANG=C.UTF-8
 
-# 启动命令
 CMD ["./start.sh"]

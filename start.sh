@@ -1,10 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ -z "$JAVA_OPTS" ]; then
-    JAVA_OPTS="-Xms512M -Xmx1G"
+    export JAVA_OPTS="-Xms512M -Xmx1G"
 fi
 
-export JAVA_OPTS
-
-cd /app/mcl
-exec ./mcl
+java $JAVA_OPTS -cp "./content/*" net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
