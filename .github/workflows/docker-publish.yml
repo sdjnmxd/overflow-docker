@@ -199,12 +199,12 @@ jobs:
           push: true
           build-args: |
             MAVEN_REPO=${{ needs.check_versions.outputs.maven_repo }}
-            OVERFLOW_VERSION=${{ needs.check_versions.outputs.overflow_version }}
-            MIRAI_VERSION=${{ needs.check_versions.outputs.mirai_version }}
+            OVERFLOW_VERSION=${{ needs.check_versions.outputs.new_overflow_version }}
+            MIRAI_VERSION=${{ needs.check_versions.outputs.new_mirai_version }}
             BOUNCYCASTLE_VERSION=${{ needs.check_versions.outputs.bouncycastle_version }}
           tags: |
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.new_overflow_version }}-mirai.${{ needs.check_versions.outputs.new_mirai_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -253,7 +253,7 @@ jobs:
             ## Docker 镜像
             ```bash
             # 最新版本
-            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.new_overflow_version }}-mirai.${{ needs.check_versions.outputs.new_mirai_version }}
             
             # 或使用 latest 标签
             docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
