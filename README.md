@@ -27,9 +27,13 @@ docker pull sdjnmxd/overflow:latest
 
 ### 配置文件
 Overflow 和 Mirai Console 的配置文件存放在以下目录：
-- 数据目录：`./data`
-- 配置目录：`./config`
-- 插件目录：`./plugins`
+- 数据目录：`./data`（存储机器人数据）
+- 配置目录：`./config`（存储配置文件）
+- 插件目录：`./plugins`（存储插件文件）
+- 日志目录：`./logs`（可选，存储日志文件）
+- 主配置文件：`overflow.json`
+
+其他目录如 `bots`、`content`、`plugin-libraries` 等会由程序自动生成和管理，无需手动维护。
 
 ### 环境变量
 本项目支持以下环境变量配置：
@@ -71,6 +75,30 @@ docker-compose up -d
    - 在 Mirai Console 中配置机器人账号
    - 根据需要安装 Mirai 插件
 
+## 本地构建
+
+如果需要本地构建镜像，可以使用以下命令：
+
+```bash
+# 使用默认版本构建
+docker build -t overflow .
+
+# 指定版本构建
+docker build -t overflow \
+  --build-arg MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven \
+  --build-arg OVERFLOW_VERSION=1.0.5 \
+  --build-arg MIRAI_VERSION=2.16.0 \
+  --build-arg BOUNCYCASTLE_VERSION=1.64 .
+```
+
+默认参数：
+- Maven仓库: https://mirrors.huaweicloud.com/repository/maven
+- Overflow: 1.0.5
+- Mirai Console: 2.16.0
+- BouncyCastle: 1.64
+
+这些参数可以在构建时通过 `--build-arg` 参数覆盖。
+
 ## 版本管理
 
 镜像版本说明：
@@ -80,7 +108,7 @@ docker-compose up -d
 当前集成的组件版本：
 - Overflow Core: 
 - Mirai Console: 
-- BouncyCastle: 1.64
+- BouncyCastle: 默认 1.64（可在构建时指定）
 
 镜像通过 GitHub Actions 自动构建并推送至 [Docker Hub](https://hub.docker.com/r/sdjnmxd/overflow)：
 - 每日自动检查 Overflow 和 Mirai Console 更新
