@@ -78,7 +78,7 @@ docker-compose up -d
 - `x.y.z-mirai.a.b.c`: 特定版本号，对应 Overflow 和 Mirai Console 的发布版本
 
 当前集成的组件版本：
-- Overflow Core: 1.0.5
+- Overflow Core: v1.0.5
 - Mirai Console: 2.16.0
 - BouncyCastle: 1.64
 
