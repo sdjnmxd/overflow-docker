@@ -60,12 +60,23 @@ jobs:
         run: |
           # 如果没有指定Overflow版本，则获取最新版本
           if [ -z "${{ github.event.inputs.overflow_version }}" ]; then
+            echo "自动获取 Overflow 最新版本"
             NEW_OVERFLOW_VERSION=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+            if [ -z "$NEW_OVERFLOW_VERSION" ] || [ "$NEW_OVERFLOW_VERSION" = "null" ]; then
+              echo "::error::无法获取 Overflow 最新版本"
+              exit 1
+            fi
+            echo "获取到 Overflow 最新版本: ${NEW_OVERFLOW_VERSION}"
             RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/latest"
             CHANGELOG=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.body')
             RELEASE_DATE=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.published_at')
           else
+            echo "使用指定的 Overflow 版本: ${{ github.event.inputs.overflow_version }}"
             NEW_OVERFLOW_VERSION=$(echo "${{ github.event.inputs.overflow_version }}" | sed 's/^v//')
+            if [ -z "$NEW_OVERFLOW_VERSION" ]; then
+              echo "::error::指定的 Overflow 版本号无效"
+              exit 1
+            fi
             RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/${NEW_OVERFLOW_VERSION}"
             # 获取指定版本的release信息
             RELEASE_INFO=$(curl -s "https://api.github.com/repos/MrXiaoM/Overflow/releases/tags/${NEW_OVERFLOW_VERSION}")
@@ -81,12 +92,23 @@ jobs:
           
           # 如果没有指定Mirai版本，则获取最新版本
           if [ -z "${{ github.event.inputs.mirai_version }}" ]; then
+            echo "自动获取 Mirai 最新版本"
             NEW_MIRAI_VERSION=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.tag_name' | sed 's/v//')
+            if [ -z "$NEW_MIRAI_VERSION" ] || [ "$NEW_MIRAI_VERSION" = "null" ]; then
+              echo "::error::无法获取 Mirai 最新版本"
+              exit 1
+            fi
+            echo "获取到 Mirai 最新版本: ${NEW_MIRAI_VERSION}"
             MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/latest"
             MIRAI_CHANGELOG=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.body')
             MIRAI_RELEASE_DATE=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.published_at')
           else
+            echo "使用指定的 Mirai 版本: ${{ github.event.inputs.mirai_version }}"
             NEW_MIRAI_VERSION=${{ github.event.inputs.mirai_version }}
+            if [ -z "$NEW_MIRAI_VERSION" ]; then
+              echo "::error::指定的 Mirai 版本号无效"
+              exit 1
+            fi
             MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/${NEW_MIRAI_VERSION}"
             # 获取指定版本的release信息
             MIRAI_RELEASE_INFO=$(curl -s "https://api.github.com/repos/mamoe/mirai/releases/tags/${NEW_MIRAI_VERSION}")
@@ -165,6 +187,16 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
     runs-on: ubuntu-latest
     steps:
+      - name: Check versions
+        run: |
+          if [ -z "${{ needs.check_versions.outputs.new_overflow_version }}" ] || [ -z "${{ needs.check_versions.outputs.new_mirai_version }}" ]; then
+            echo "::error::版本号不能为空 (Overflow: ${{ needs.check_versions.outputs.new_overflow_version }}, Mirai: ${{ needs.check_versions.outputs.new_mirai_version }})"
+            exit 1
+          fi
+          echo "Versions to build:"
+          echo "Overflow: ${{ needs.check_versions.outputs.new_overflow_version }}"
+          echo "Mirai: ${{ needs.check_versions.outputs.new_mirai_version }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -172,6 +204,11 @@ jobs:
         run: |
           VERSION="${{ needs.check_versions.outputs.new_overflow_version }}"
           MIRAI_VERSION="${{ needs.check_versions.outputs.new_mirai_version }}"
+          
+          if [ -z "$VERSION" ] || [ -z "$MIRAI_VERSION" ]; then
+            echo "::error::版本号不能为空"
+            exit 1
+          fi
           
           # 更新 README.md 中的版本信息
           sed -i "s/Overflow Core: .*/Overflow Core: $VERSION/" README.md
@@ -194,17 +231,20 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v6
+        env:
+          OVERFLOW_VERSION: ${{ needs.check_versions.outputs.new_overflow_version }}
+          MIRAI_VERSION: ${{ needs.check_versions.outputs.new_mirai_version }}
         with:
           context: .
           push: true
           build-args: |
             MAVEN_REPO=${{ needs.check_versions.outputs.maven_repo }}
-            OVERFLOW_VERSION=${{ needs.check_versions.outputs.new_overflow_version }}
-            MIRAI_VERSION=${{ needs.check_versions.outputs.new_mirai_version }}
+            OVERFLOW_VERSION=${{ env.OVERFLOW_VERSION }}
+            MIRAI_VERSION=${{ env.MIRAI_VERSION }}
             BOUNCYCASTLE_VERSION=${{ needs.check_versions.outputs.bouncycastle_version }}
           tags: |
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.new_overflow_version }}-mirai.${{ needs.check_versions.outputs.new_mirai_version }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.OVERFLOW_VERSION }}-mirai.${{ env.MIRAI_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -253,7 +293,7 @@ jobs:
             ## Docker 镜像
             ```bash
             # 最新版本
-            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.new_overflow_version }}-mirai.${{ needs.check_versions.outputs.new_mirai_version }}
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.OVERFLOW_VERSION }}-mirai.${{ env.MIRAI_VERSION }}
             
             # 或使用 latest 标签
             docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
@@ -272,4 +312,4 @@ jobs:
       - name: Update Summary
         if: success()
         run: |
-          echo "Docker image updated to version ${{ needs.check_versions.outputs.new_overflow_version }}-mirai.${{ needs.check_versions.outputs.new_mirai_version }}" >> $GITHUB_STEP_SUMMARY 
+          echo "Docker image updated to version ${{ env.OVERFLOW_VERSION }}-mirai.${{ env.MIRAI_VERSION }}" >> $GITHUB_STEP_SUMMARY 
