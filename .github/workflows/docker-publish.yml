@@ -170,8 +170,8 @@ jobs:
 
       - name: Update version in files
         run: |
-          VERSION="${{ needs.check_versions.outputs.overflow_version }}"
-          MIRAI_VERSION="${{ needs.check_versions.outputs.mirai_version }}"
+          VERSION="${{ needs.check_versions.outputs.new_overflow_version }}"
+          MIRAI_VERSION="${{ needs.check_versions.outputs.new_mirai_version }}"
           
           # 更新 README.md 中的版本信息
           sed -i "s/Overflow Core: .*/Overflow Core: $VERSION/" README.md
@@ -272,4 +272,4 @@ jobs:
       - name: Update Summary
         if: success()
         run: |
-          echo "Docker image updated to version ${{ needs.check_versions.outputs.overflow_version }}" >> $GITHUB_STEP_SUMMARY 
+          echo "Docker image updated to version ${{ needs.check_versions.outputs.new_overflow_version }}-mirai.${{ needs.check_versions.outputs.new_mirai_version }}" >> $GITHUB_STEP_SUMMARY 
