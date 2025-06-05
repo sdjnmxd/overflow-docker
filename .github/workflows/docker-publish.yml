@@ -62,6 +62,10 @@ jobs:
       - name: Get latest versions
         id: check
         run: |
+          # 设置默认值
+          BOUNCYCASTLE_VERSION="${{ github.event.inputs.bouncycastle_version }}"
+          MAVEN_REPO="${{ github.event.inputs.maven_repo }}"
+          
           # 如果没有指定Overflow版本，则获取最新版本
           if [ -z "${{ github.event.inputs.overflow_version }}" ]; then
             echo "自动获取 Overflow 最新版本"
@@ -125,12 +129,6 @@ jobs:
               MIRAI_RELEASE_DATE=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.published_at')
             fi
           fi
-          
-          # 设置 BouncyCastle 版本
-          BOUNCYCASTLE_VERSION=${{ github.event.inputs.bouncycastle_version }}
-          
-          # 设置 Maven 仓库地址
-          MAVEN_REPO=${{ github.event.inputs.maven_repo }}
           
           # 获取 Docker Hub 当前版本
           if ! CURRENT_OVERFLOW_VERSION=$(curl -sf "https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_USERNAME }}/overflow/tags/" | \
@@ -274,21 +272,23 @@ jobs:
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OVERFLOW_VERSION: ${{ needs.check_versions.outputs.new_overflow_version }}
+          MIRAI_VERSION: ${{ needs.check_versions.outputs.new_mirai_version }}
         with:
-          tag_name: "${{ needs.check_versions.outputs.overflow_version }}"
-          name: "Overflow Docker ${{ needs.check_versions.outputs.overflow_version }}"
+          tag_name: "${{ env.OVERFLOW_VERSION }}"
+          name: "Overflow Docker ${{ env.OVERFLOW_VERSION }}"
           body: |
             自动更新 Overflow Docker 版本
             
             ## 版本信息
             
             ### Overflow
-            - 版本: ${{ needs.check_versions.outputs.current_overflow_version }} -> ${{ needs.check_versions.outputs.overflow_version }}
+            - 版本: ${{ needs.check_versions.outputs.current_overflow_version }} -> ${{ env.OVERFLOW_VERSION }}
             - 发布时间: ${{ needs.check_versions.outputs.release_date }}
             - Release 链接: ${{ needs.check_versions.outputs.release_url }}
             
             ### Mirai
-            - 版本: ${{ needs.check_versions.outputs.current_mirai_version }} -> ${{ needs.check_versions.outputs.mirai_version }}
+            - 版本: ${{ needs.check_versions.outputs.current_mirai_version }} -> ${{ env.MIRAI_VERSION }}
             - 发布时间: ${{ needs.check_versions.outputs.mirai_release_date }}
             - Release 链接: ${{ needs.check_versions.outputs.mirai_release_url }}
             
@@ -317,5 +317,8 @@ jobs:
 
       - name: Update Summary
         if: success()
+        env:
+          OVERFLOW_VERSION: ${{ needs.check_versions.outputs.new_overflow_version }}
+          MIRAI_VERSION: ${{ needs.check_versions.outputs.new_mirai_version }}
         run: |
           echo "Docker image updated to version ${{ env.OVERFLOW_VERSION }}-mirai.${{ env.MIRAI_VERSION }}" >> $GITHUB_STEP_SUMMARY 
