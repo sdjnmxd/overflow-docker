@@ -60,22 +60,44 @@ jobs:
         run: |
           # 如果没有指定Overflow版本，则获取最新版本
           if [ -z "${{ github.event.inputs.overflow_version }}" ]; then
-            OVERFLOW_VERSION=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.tag_name')
-            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/${OVERFLOW_VERSION}"
+            NEW_OVERFLOW_VERSION=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/latest"
             CHANGELOG=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.body')
             RELEASE_DATE=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.published_at')
           else
-            OVERFLOW_VERSION=${{ github.event.inputs.overflow_version }}
-            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/${OVERFLOW_VERSION}"
-            CHANGELOG="手动指定版本构建"
-            RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            NEW_OVERFLOW_VERSION=$(echo "${{ github.event.inputs.overflow_version }}" | sed 's/^v//')
+            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/${NEW_OVERFLOW_VERSION}"
+            # 获取指定版本的release信息
+            RELEASE_INFO=$(curl -s "https://api.github.com/repos/MrXiaoM/Overflow/releases/tags/${NEW_OVERFLOW_VERSION}")
+            if [ "$(echo "$RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
+              echo "::warning::无法获取版本 ${NEW_OVERFLOW_VERSION} 的发布信息"
+              CHANGELOG="手动指定版本构建（无法获取发布信息）"
+              RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            else
+              CHANGELOG=$(echo "$RELEASE_INFO" | jq -r '.body')
+              RELEASE_DATE=$(echo "$RELEASE_INFO" | jq -r '.published_at')
+            fi
           fi
           
           # 如果没有指定Mirai版本，则获取最新版本
           if [ -z "${{ github.event.inputs.mirai_version }}" ]; then
-            MIRAI_VERSION=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.tag_name' | sed 's/v//')
+            NEW_MIRAI_VERSION=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.tag_name' | sed 's/v//')
+            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/latest"
+            MIRAI_CHANGELOG=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.body')
+            MIRAI_RELEASE_DATE=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.published_at')
           else
-            MIRAI_VERSION=${{ github.event.inputs.mirai_version }}
+            NEW_MIRAI_VERSION=${{ github.event.inputs.mirai_version }}
+            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/${NEW_MIRAI_VERSION}"
+            # 获取指定版本的release信息
+            MIRAI_RELEASE_INFO=$(curl -s "https://api.github.com/repos/mamoe/mirai/releases/tags/${NEW_MIRAI_VERSION}")
+            if [ "$(echo "$MIRAI_RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
+              echo "::warning::无法获取Mirai版本 ${NEW_MIRAI_VERSION} 的发布信息"
+              MIRAI_CHANGELOG="手动指定版本构建（无法获取发布信息）"
+              MIRAI_RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            else
+              MIRAI_CHANGELOG=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.body')
+              MIRAI_RELEASE_DATE=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.published_at')
+            fi
           fi
           
           # 设置 BouncyCastle 版本
@@ -85,41 +107,54 @@ jobs:
           MAVEN_REPO=${{ github.event.inputs.maven_repo }}
           
           # 获取 Docker Hub 当前版本
-          if ! CURRENT_VERSION=$(curl -sf "https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_USERNAME }}/overflow/tags/" | \
+          if ! CURRENT_OVERFLOW_VERSION=$(curl -sf "https://hub.docker.com/v2/repositories/${{ vars.DOCKERHUB_USERNAME }}/overflow/tags/" | \
             jq -r '.results[] | select(.name != "latest") | .name' | head -n1); then
             echo "::warning::Failed to fetch Docker Hub version, assuming first build"
-            CURRENT_VERSION="0.0.0"
+            CURRENT_OVERFLOW_VERSION="0.0.0"
           fi
           
           # 如果没有找到版本号（可能是首次构建）
-          if [ -z "$CURRENT_VERSION" ] || [ "$CURRENT_VERSION" == "null" ]; then
+          if [ -z "$CURRENT_OVERFLOW_VERSION" ] || [ "$CURRENT_OVERFLOW_VERSION" == "null" ]; then
             echo "No version found in Docker Hub, assuming first build"
-            CURRENT_VERSION="0.0.0"
+            CURRENT_OVERFLOW_VERSION="0.0.0"
+          fi
+
+          # 从当前版本中提取 Mirai 版本
+          if [[ "$CURRENT_OVERFLOW_VERSION" =~ -mirai\.(.*) ]]; then
+            CURRENT_MIRAI_VERSION="${BASH_REMATCH[1]}"
+          else
+            CURRENT_MIRAI_VERSION="0.0.0"
           fi
           
           # 比较版本
-          if [ "$OVERFLOW_VERSION" != "$CURRENT_VERSION" ]; then
-            echo "Update needed: $CURRENT_VERSION -> $OVERFLOW_VERSION"
+          if [ "$NEW_OVERFLOW_VERSION" != "$CURRENT_OVERFLOW_VERSION" ] || [ "$NEW_MIRAI_VERSION" != "$CURRENT_MIRAI_VERSION" ]; then
+            echo "Update needed: $CURRENT_OVERFLOW_VERSION (mirai: $CURRENT_MIRAI_VERSION) -> $NEW_OVERFLOW_VERSION (mirai: $NEW_MIRAI_VERSION)"
             echo "needs_update=true" >> $GITHUB_OUTPUT
           else
-            echo "No update needed, current version is latest: $CURRENT_VERSION"
+            echo "No update needed, current version is latest: $CURRENT_OVERFLOW_VERSION (mirai: $CURRENT_MIRAI_VERSION)"
             echo "needs_update=false" >> $GITHUB_OUTPUT
           fi
           
           # 输出版本信息
-          echo "overflow_version=${OVERFLOW_VERSION}" >> $GITHUB_OUTPUT
-          echo "mirai_version=${MIRAI_VERSION}" >> $GITHUB_OUTPUT
+          echo "new_overflow_version=${NEW_OVERFLOW_VERSION}" >> $GITHUB_OUTPUT
+          echo "new_mirai_version=${NEW_MIRAI_VERSION}" >> $GITHUB_OUTPUT
+          echo "current_overflow_version=${CURRENT_OVERFLOW_VERSION}" >> $GITHUB_OUTPUT
+          echo "current_mirai_version=${CURRENT_MIRAI_VERSION}" >> $GITHUB_OUTPUT
           echo "bouncycastle_version=${BOUNCYCASTLE_VERSION}" >> $GITHUB_OUTPUT
           echo "maven_repo=${MAVEN_REPO}" >> $GITHUB_OUTPUT
-          echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
           echo "release_date=${RELEASE_DATE}" >> $GITHUB_OUTPUT
           echo "release_url=${RELEASE_URL}" >> $GITHUB_OUTPUT
+          echo "mirai_release_date=${MIRAI_RELEASE_DATE}" >> $GITHUB_OUTPUT
+          echo "mirai_release_url=${MIRAI_RELEASE_URL}" >> $GITHUB_OUTPUT
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+          echo "mirai_changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$MIRAI_CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
-          echo "Using Overflow version: ${OVERFLOW_VERSION}"
-          echo "Using Mirai version: ${MIRAI_VERSION}"
+          echo "Using Overflow version: ${NEW_OVERFLOW_VERSION}"
+          echo "Using Mirai version: ${NEW_MIRAI_VERSION}"
           echo "Using BouncyCastle version: ${BOUNCYCASTLE_VERSION}"
           echo "Using Maven repo: ${MAVEN_REPO}"
 
@@ -169,7 +204,7 @@ jobs:
             BOUNCYCASTLE_VERSION=${{ needs.check_versions.outputs.bouncycastle_version }}
           tags: |
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -194,32 +229,43 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ needs.check_versions.outputs.overflow_version }}"
+          tag_name: "${{ needs.check_versions.outputs.overflow_version }}"
           name: "Overflow Docker ${{ needs.check_versions.outputs.overflow_version }}"
           body: |
             自动更新 Overflow Docker 版本
             
             ## 版本信息
             
-            - Overflow: ${{ needs.check_versions.outputs.current_version }} -> ${{ needs.check_versions.outputs.overflow_version }}
-            - Mirai: ${{ needs.check_versions.outputs.mirai_version }}
-            - BouncyCastle: ${{ needs.check_versions.outputs.bouncycastle_version }}
-            - Maven仓库: ${{ needs.check_versions.outputs.maven_repo }}
+            ### Overflow
+            - 版本: ${{ needs.check_versions.outputs.current_overflow_version }} -> ${{ needs.check_versions.outputs.overflow_version }}
             - 发布时间: ${{ needs.check_versions.outputs.release_date }}
             - Release 链接: ${{ needs.check_versions.outputs.release_url }}
+            
+            ### Mirai
+            - 版本: ${{ needs.check_versions.outputs.current_mirai_version }} -> ${{ needs.check_versions.outputs.mirai_version }}
+            - 发布时间: ${{ needs.check_versions.outputs.mirai_release_date }}
+            - Release 链接: ${{ needs.check_versions.outputs.mirai_release_url }}
+            
+            ### 其他信息
+            - BouncyCastle: ${{ needs.check_versions.outputs.bouncycastle_version }}
+            - Maven仓库: ${{ needs.check_versions.outputs.maven_repo }}
             
             ## Docker 镜像
             ```bash
             # 最新版本
-            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
             
             # 或使用 latest 标签
             docker pull ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ```
             
-            ## 更新说明
+            ## Overflow 更新说明
             
             ${{ needs.check_versions.outputs.changelog }}
+            
+            ## Mirai 更新说明
+            
+            ${{ needs.check_versions.outputs.mirai_changelog }}
           draft: false
           prerelease: false
 
