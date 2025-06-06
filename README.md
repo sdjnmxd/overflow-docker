@@ -46,10 +46,10 @@ docker compose up -d
 ## 目录说明
 
 服务会自动创建以下目录：
-- `bots`：机器人账号数据
-- `config`：配置文件
-- `data`：数据文件
-- `logs`：日志文件
+- `bots`：机器人账号数据（挂载到容器的 `/app/overflow/bots`）
+- `config`：配置文件（挂载到容器的 `/app/overflow/config`）
+- `data`：数据文件（挂载到容器的 `/app/overflow/data`）
+- `logs`：日志文件（挂载到容器的 `/app/overflow/logs`）
 
 ## 配置说明
 
