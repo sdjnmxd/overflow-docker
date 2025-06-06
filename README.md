@@ -135,6 +135,7 @@ docker build -t overflow \
 ## 支持架构
 
 - linux/amd64
+- linux/arm64
 
 ## 问题反馈
 

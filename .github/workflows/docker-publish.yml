@@ -214,13 +214,14 @@ jobs:
 
   build:
     needs: check_versions
-    if: |
-      needs.check_versions.outputs.needs_update == 'true' ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
+    if: ${{ needs.check_versions.outputs.needs_update == 'true' || github.event.inputs.force_build == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -232,23 +233,19 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
-        env:
-          OVERFLOW_VERSION: ${{ needs.check_versions.outputs.overflow_version }}
-          MIRAI_VERSION: ${{ needs.check_versions.outputs.mirai_version }}
-          BOUNCYCASTLE_VERSION: ${{ needs.check_versions.outputs.bouncycastle_version }}
-          MAVEN_REPO: ${{ needs.check_versions.outputs.maven_repo }}
+        uses: docker/build-push-action@v5
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: true
-          build-args: |
-            MAVEN_REPO=${{ env.MAVEN_REPO }}
-            OVERFLOW_VERSION=${{ env.OVERFLOW_VERSION }}
-            MIRAI_VERSION=${{ env.MIRAI_VERSION }}
-            BOUNCYCASTLE_VERSION=${{ env.BOUNCYCASTLE_VERSION }}
           tags: |
             ${{ env.DOCKER_HUB_REPO }}:latest
-            ${{ env.DOCKER_HUB_REPO }}:${{ env.OVERFLOW_VERSION }}-mirai.${{ env.MIRAI_VERSION }}
+            ${{ env.DOCKER_HUB_REPO }}:${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
+          build-args: |
+            MAVEN_REPO=${{ needs.check_versions.outputs.maven_repo }}
+            OVERFLOW_VERSION=${{ needs.check_versions.outputs.overflow_version }}
+            MIRAI_VERSION=${{ needs.check_versions.outputs.mirai_version }}
+            BOUNCYCASTLE_VERSION=${{ needs.check_versions.outputs.bouncycastle_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

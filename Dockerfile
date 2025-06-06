@@ -1,9 +1,17 @@
-FROM eclipse-temurin:17-jdk-jammy
+FROM --platform=$TARGETPLATFORM eclipse-temurin:17-jdk-jammy
 
 # 设置环境变量
 ENV DOCKERIZE_VERSION="v0.7.0" \
     JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8" \
     LANG=C.UTF-8
+
+# 设置构建参数
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG MAVEN_REPO
+ARG OVERFLOW_VERSION
+ARG MIRAI_VERSION
+ARG BOUNCYCASTLE_VERSION
 
 WORKDIR /app
 
@@ -15,9 +23,14 @@ RUN apt-get update && apt-get install -y \
     curl \
     jq \
     && rm -rf /var/lib/apt/lists/* \
-    && wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+    && case "${TARGETPLATFORM}" in \
+         "linux/amd64")  DOCKERIZE_ARCH=amd64  ;; \
+         "linux/arm64")  DOCKERIZE_ARCH=arm64  ;; \
+         *)             DOCKERIZE_ARCH=amd64  ;; \
+       esac \
+    && wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-${DOCKERIZE_ARCH}-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-${DOCKERIZE_ARCH}-$DOCKERIZE_VERSION.tar.gz \
+    && rm dockerize-linux-${DOCKERIZE_ARCH}-$DOCKERIZE_VERSION.tar.gz
 
 # 创建目录结构
 RUN mkdir -p overflow/content \
@@ -38,12 +51,6 @@ COPY start.sh overflow/
 # 设置工作目录和权限
 WORKDIR /app/overflow
 RUN chmod +x start.sh
-
-# 构建参数
-ARG MAVEN_REPO
-ARG OVERFLOW_VERSION
-ARG MIRAI_VERSION
-ARG BOUNCYCASTLE_VERSION
 
 # for debug
 ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
