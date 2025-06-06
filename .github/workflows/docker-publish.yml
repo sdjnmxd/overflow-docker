@@ -256,9 +256,9 @@ jobs:
         if: success()
         run: |
           # 更新版本信息
-          sed -i "s/Overflow Core: .*/Overflow Core: ${{ env.OVERFLOW_VERSION }}/" README.md
-          sed -i "s/Mirai Console: .*/Mirai Console: ${{ env.MIRAI_VERSION }}/" README.md
-          sed -i "s/BouncyCastle: .*/BouncyCastle: ${{ env.BOUNCYCASTLE_VERSION }}/" README.md
+          sed -i "s/Overflow Core: .*/Overflow Core: ${{ needs.check_versions.outputs.overflow_version }}/" README.md
+          sed -i "s/Mirai Console: .*/Mirai Console: ${{ needs.check_versions.outputs.mirai_version }}/" README.md
+          sed -i "s/BouncyCastle: .*/BouncyCastle: ${{ needs.check_versions.outputs.bouncycastle_version }}/" README.md
           
           # 配置 Git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -275,7 +275,7 @@ jobs:
             github.event_name == 'schedule' ||
             (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
           )
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
