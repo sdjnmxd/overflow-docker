@@ -3,8 +3,8 @@
 # 定义信号处理函数
 handle_sigterm() {
     echo "收到 SIGTERM 信号，正在优雅关闭..."
-    # 向 Mirai Console 发送 stop 命令
-    echo "stop" > /proc/1/fd/0
+    # 向 Mirai Console 发送 /stop 命令
+    echo "/stop" > /proc/1/fd/0
     # 等待进程退出
     wait $mirai_pid
 }
