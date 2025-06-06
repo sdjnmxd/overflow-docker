@@ -3,6 +3,10 @@ name: Docker Image CI/CD
 on:
   schedule:
     - cron: '0 0 * * *'  # 每天UTC 00:00运行
+  push:
+    branches:
+      - main
+      - feature/arm64-support
   workflow_dispatch:
     inputs:
       overflow_version:
@@ -239,8 +243,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.DOCKER_HUB_REPO }}:latest
-            ${{ env.DOCKER_HUB_REPO }}:${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
+            ${{ env.DOCKER_HUB_REPO }}:arm64-latest
+            ${{ env.DOCKER_HUB_REPO }}:arm64-${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
           build-args: |
             MAVEN_REPO=${{ needs.check_versions.outputs.maven_repo }}
             OVERFLOW_VERSION=${{ needs.check_versions.outputs.overflow_version }}

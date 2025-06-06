@@ -2,6 +2,18 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/sdjnmxd/overflow)](https://hub.docker.com/r/sdjnmxd/overflow) [![Docker Stars](https://img.shields.io/docker/stars/sdjnmxd/overflow)](https://hub.docker.com/r/sdjnmxd/overflow) [![Docker Image Size](https://img.shields.io/docker/image-size/sdjnmxd/overflow/latest)](https://hub.docker.com/r/sdjnmxd/overflow) [![Docker Image CI/CD](https://github.com/sdjnmxd/overflow-docker/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/sdjnmxd/overflow-docker/actions/workflows/docker-publish.yml) [![GitHub Stars](https://img.shields.io/github/stars/sdjnmxd/overflow-docker.svg?logo=github)](https://github.com/sdjnmxd/overflow-docker) [![GitHub License](https://img.shields.io/github/license/sdjnmxd/overflow-docker)](https://github.com/sdjnmxd/overflow-docker/blob/main/LICENSE) [![GitHub last commit](https://img.shields.io/github/last-commit/sdjnmxd/overflow-docker)](https://github.com/sdjnmxd/overflow-docker/commits/main)
 
+> ⚠️ **实验性分支提醒**
+> 
+> 这是一个实验性的 ARM64 支持分支。目前该分支：
+> - 支持 linux/amd64 和 linux/arm64 双架构
+> - 镜像标签以 `arm64-` 开头，如 `arm64-latest`
+> - 尚未在真实 ARM64 设备上进行完整测试
+> 
+> 如果您有 ARM64 设备（如 Apple M1/M2 Mac、树莓派等）并愿意帮助测试，欢迎：
+> 1. 尝试使用并反馈问题
+> 2. 提交 Pull Request 改进支持
+> 3. 在 Issues 中分享使用体验
+
 这是 [Overflow](https://github.com/MrXiaoM/Overflow) 的 Docker 部署配置，提供了一个开箱即用的 Mirai Console + Overflow 容器化部署方案。
 
 ## 快速开始
@@ -135,7 +147,42 @@ docker build -t overflow \
 ## 支持架构
 
 - linux/amd64
-- linux/arm64
+- linux/arm64 (实验性支持)
+
+## 使用说明
+
+### ARM64 版本
+
+如果您使用 ARM64 设备（如 Apple M1/M2 Mac、树莓派等），请使用以下标签：
+
+```bash
+# 最新版本
+docker pull sdjnmxd/overflow:arm64-latest
+
+# 或指定版本
+docker pull sdjnmxd/overflow:arm64-<版本号>
+```
+
+在 docker-compose.yml 中使用时，请确保指定 arm64 标签：
+
+```yaml
+services:
+  overflow:
+    image: sdjnmxd/overflow:arm64-latest
+    # ... 其他配置 ...
+```
+
+### AMD64 版本（稳定版）
+
+如果您使用普通 x86_64 设备，请继续使用标准标签：
+
+```bash
+# 最新版本
+docker pull sdjnmxd/overflow:latest
+
+# 或指定版本
+docker pull sdjnmxd/overflow:<版本号>
+```
 
 ## 问题反馈
 
