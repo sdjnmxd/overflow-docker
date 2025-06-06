@@ -64,7 +64,18 @@ jobs:
         run: |
           # 设置默认值
           BOUNCYCASTLE_VERSION="${{ github.event.inputs.bouncycastle_version }}"
+          if [ -z "$BOUNCYCASTLE_VERSION" ]; then
+            BOUNCYCASTLE_VERSION="1.64"
+          fi
+          
           MAVEN_REPO="${{ github.event.inputs.maven_repo }}"
+          if [ -z "$MAVEN_REPO" ]; then
+            MAVEN_REPO="https://mirrors.huaweicloud.com/repository/maven"
+          fi
+          
+          echo "设置构建参数:"
+          echo "- BouncyCastle版本: ${BOUNCYCASTLE_VERSION}"
+          echo "- Maven仓库: ${MAVEN_REPO}"
           
           # 如果没有指定Overflow版本，则获取最新版本
           if [ -z "${{ github.event.inputs.overflow_version }}" ]; then
@@ -238,14 +249,16 @@ jobs:
         env:
           OVERFLOW_VERSION: ${{ needs.check_versions.outputs.new_overflow_version }}
           MIRAI_VERSION: ${{ needs.check_versions.outputs.new_mirai_version }}
+          BOUNCYCASTLE_VERSION: ${{ needs.check_versions.outputs.bouncycastle_version }}
+          MAVEN_REPO: ${{ needs.check_versions.outputs.maven_repo }}
         with:
           context: .
           push: true
           build-args: |
-            MAVEN_REPO=${{ needs.check_versions.outputs.maven_repo }}
+            MAVEN_REPO=${{ env.MAVEN_REPO }}
             OVERFLOW_VERSION=${{ env.OVERFLOW_VERSION }}
             MIRAI_VERSION=${{ env.MIRAI_VERSION }}
-            BOUNCYCASTLE_VERSION=${{ needs.check_versions.outputs.bouncycastle_version }}
+            BOUNCYCASTLE_VERSION=${{ env.BOUNCYCASTLE_VERSION }}
           tags: |
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.OVERFLOW_VERSION }}-mirai.${{ env.MIRAI_VERSION }}
