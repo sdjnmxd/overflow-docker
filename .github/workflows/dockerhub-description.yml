@@ -4,13 +4,19 @@ on:
   push:
     branches:
       - main
-      - master
     paths:
       - README.md
   workflow_dispatch:
+    inputs:
+      force_update:
+        description: '强制更新 Docker Hub 描述'
+        type: boolean
+        default: false
+        required: true
 
 jobs:
   check-and-update:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current code
@@ -22,8 +28,13 @@ jobs:
         id: check
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "should_update=true" >> $GITHUB_OUTPUT
-            echo "Manual trigger, will update description"
+            if [ "${{ github.event.inputs.force_update }}" == "true" ]; then
+              echo "should_update=true" >> $GITHUB_OUTPUT
+              echo "Manual trigger with force update, will update description"
+            else
+              echo "should_update=false" >> $GITHUB_OUTPUT
+              echo "Manual trigger without force update, skipping update"
+            fi
           else
             # 检查 README.md 是否有实际变化
             if git diff --quiet HEAD^ HEAD README.md; then

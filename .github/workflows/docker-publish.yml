@@ -3,10 +3,6 @@ name: Docker Image CI/CD
 on:
   schedule:
     - cron: '0 0 * * *'  # 每天UTC 00:00运行
-  push:
-    branches:
-      - main
-      - feature/arm64-support
   workflow_dispatch:
     inputs:
       overflow_version:
