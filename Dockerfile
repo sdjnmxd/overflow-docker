@@ -1,5 +1,18 @@
 FROM eclipse-temurin:17-jdk-jammy
 
+# 添加镜像标签
+LABEL maintainer="sdjnmxd <sdjnmxd@users.noreply.github.com>"
+LABEL org.opencontainers.image.title="Overflow Docker"
+LABEL org.opencontainers.image.description="Overflow 的 Docker 容器化部署版本"
+LABEL org.opencontainers.image.version="latest"
+LABEL org.opencontainers.image.authors="sdjnmxd"
+LABEL org.opencontainers.image.url="https://github.com/sdjnmxd/overflow-docker"
+LABEL org.opencontainers.image.source="https://github.com/sdjnmxd/overflow-docker"
+LABEL org.opencontainers.image.documentation="https://github.com/sdjnmxd/overflow-docker#readme"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.vendor="sdjnmxd"
+LABEL org.opencontainers.image.base.name="eclipse-temurin:17-jdk-jammy"
+
 # 设置环境变量
 ENV DOCKERIZE_VERSION="v0.7.0" \
     JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8" \
