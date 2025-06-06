@@ -7,23 +7,26 @@ RUN apt-get update && apt-get install -y \
     procps \
     unzip \
     wget \
+    curl \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 COPY README.md LICENSE ./
 
-RUN mkdir -p overflow/content
+RUN mkdir -p overflow/content overflow/plugins
 
 ARG MAVEN_REPO
 ARG OVERFLOW_VERSION
 ARG MIRAI_VERSION
 ARG BOUNCYCASTLE_VERSION
+
 # for debug
 #ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
 #ARG OVERFLOW_VERSION=1.0.5
 #ARG MIRAI_VERSION=2.16.0
 #ARG BOUNCYCASTLE_VERSION=1.64
 
-RUN echo "开始下载依赖..." \
+RUN echo "开始下载核心依赖..." \
     && echo "Maven仓库: ${MAVEN_REPO}" \
     && echo "Overflow版本: ${OVERFLOW_VERSION}" \
     && echo "Mirai版本: ${MIRAI_VERSION}" \
@@ -41,7 +44,19 @@ RUN echo "开始下载依赖..." \
     && echo "下载 mirai-console-terminal-${MIRAI_VERSION}-all.jar..." \
     && wget --no-check-certificate --progress=bar:force:noscroll \
        "${MAVEN_REPO}/net/mamoe/mirai-console-terminal/${MIRAI_VERSION}/mirai-console-terminal-${MIRAI_VERSION}-all.jar" \
-    && echo "所有依赖下载完成" \
+    && echo "核心依赖下载完成" \
+    && ls -l
+
+RUN echo "开始下载插件..." \
+    && cd overflow/plugins \
+    && echo "获取 mirai-api-http 最新版本..." \
+    && LATEST_TAG=$(curl -s https://api.github.com/repos/project-mirai/mirai-api-http/releases/latest | jq -r '.tag_name') \
+    && LATEST_VERSION=${LATEST_TAG#v} \
+    && echo "检测到 mirai-api-http 最新版本: ${LATEST_VERSION}" \
+    && echo "下载 mirai-api-http-v${LATEST_VERSION}.mirai2.jar..." \
+    && wget --no-check-certificate --progress=bar:force:noscroll \
+       "https://github.com/project-mirai/mirai-api-http/releases/download/${LATEST_TAG}/mirai-api-http-v${LATEST_VERSION}.mirai2.jar" \
+    && echo "插件下载完成" \
     && ls -l
 
 WORKDIR /app/overflow
