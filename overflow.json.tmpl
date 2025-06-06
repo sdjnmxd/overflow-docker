@@ -1,0 +1,18 @@
+{
+    "no_log___DO_NOT_REPORT_IF_YOU_SWITCH_THIS_ON___开启此选项时不接受漏洞反馈": {{ default .Env.OVERFLOW_NO_LOG "false" }},
+    "ws_host": "{{ default .Env.OVERFLOW_WS_HOST "ws://127.0.0.1:7827" }}",
+    "reversed_ws_port": {{ default .Env.OVERFLOW_REVERSED_WS_PORT "-1" }},
+    "token": "{{ default .Env.OVERFLOW_TOKEN "StarBot" }}",
+    "no_platform": {{ default .Env.OVERFLOW_NO_PLATFORM "false" }},
+    "use_cq_code": {{ default .Env.OVERFLOW_USE_CQ_CODE "false" }},
+    "retry_times": {{ default .Env.OVERFLOW_RETRY_TIMES "5" }},
+    "retry_wait_mills": {{ default .Env.OVERFLOW_RETRY_WAIT_MILLS "5000" }},
+    "retry_rest_mills": {{ default .Env.OVERFLOW_RETRY_REST_MILLS "60000" }},
+    "heartbeat_check_seconds": {{ default .Env.OVERFLOW_HEARTBEAT_CHECK_SECONDS "60" }},
+    "use_group_upload_event_for_file_message": {{ default .Env.OVERFLOW_USE_GROUP_UPLOAD_EVENT "false" }},
+    "resource_cache": {
+        "enabled": {{ default .Env.OVERFLOW_RESOURCE_CACHE_ENABLED "false" }},
+        "keep_duration_hours": {{ default .Env.OVERFLOW_RESOURCE_CACHE_DURATION "168" }}
+    },
+    "drop_events_before_connected": {{ default .Env.OVERFLOW_DROP_EVENTS_BEFORE_CONNECTED "true" }}
+} 

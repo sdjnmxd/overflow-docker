@@ -2,7 +2,6 @@ FROM eclipse-temurin:17-jdk-jammy
 
 WORKDIR /app
 
-# 安装系统依赖
 RUN apt-get update && apt-get install -y \
     procps \
     unzip \
@@ -11,9 +10,14 @@ RUN apt-get update && apt-get install -y \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
+ENV DOCKERIZE_VERSION v0.7.0
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+
 COPY README.md LICENSE ./
 
-RUN mkdir -p overflow/content overflow/plugins
+RUN mkdir -p overflow/content overflow/plugins overflow/config/net.mamoe.mirai-api-http
 
 ARG MAVEN_REPO
 ARG OVERFLOW_VERSION
@@ -21,10 +25,10 @@ ARG MIRAI_VERSION
 ARG BOUNCYCASTLE_VERSION
 
 # for debug
-#ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
-#ARG OVERFLOW_VERSION=1.0.5
-#ARG MIRAI_VERSION=2.16.0
-#ARG BOUNCYCASTLE_VERSION=1.64
+ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
+ARG OVERFLOW_VERSION=1.0.5
+ARG MIRAI_VERSION=2.16.0
+ARG BOUNCYCASTLE_VERSION=1.64
 
 RUN echo "开始下载核心依赖..." \
     && echo "Maven仓库: ${MAVEN_REPO}" \
@@ -51,13 +55,15 @@ RUN echo "开始下载插件..." \
     && cd overflow/plugins \
     && echo "获取 mirai-api-http 最新版本..." \
     && LATEST_TAG=$(curl -s https://api.github.com/repos/project-mirai/mirai-api-http/releases/latest | jq -r '.tag_name') \
-    && LATEST_VERSION=${LATEST_TAG#v} \
-    && echo "检测到 mirai-api-http 最新版本: ${LATEST_VERSION}" \
-    && echo "下载 mirai-api-http-v${LATEST_VERSION}.mirai2.jar..." \
+    && echo "检测到 mirai-api-http 最新版本 tag: ${LATEST_TAG}" \
+    && echo "下载 mirai-api-http-${LATEST_TAG#v}.mirai2.jar..." \
     && wget --no-check-certificate --progress=bar:force:noscroll \
-       "https://github.com/project-mirai/mirai-api-http/releases/download/${LATEST_TAG}/mirai-api-http-v${LATEST_VERSION}.mirai2.jar" \
+       "https://github.com/project-mirai/mirai-api-http/releases/download/${LATEST_TAG}/mirai-api-http-${LATEST_TAG#v}.mirai2.jar" \
     && echo "插件下载完成" \
     && ls -l
+
+COPY config/net.mamoe.mirai-api-http/setting.yml overflow/config/net.mamoe.mirai-api-http/
+COPY overflow.json.tmpl overflow/overflow.json.tmpl
 
 WORKDIR /app/overflow
 
