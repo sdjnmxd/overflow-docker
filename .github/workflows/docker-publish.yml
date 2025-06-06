@@ -280,10 +280,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "${{ needs.check_versions.outputs.overflow_version }}"
-          name: "Overflow Docker ${{ needs.check_versions.outputs.overflow_version }}"
+          tag_name: "arm64-${{ needs.check_versions.outputs.overflow_version }}"
+          name: "[ARM64] Overflow Docker ${{ needs.check_versions.outputs.overflow_version }}"
           body: |
-            自动更新 Overflow Docker 版本
+            🧪 **实验性 ARM64 支持版本**
+            
+            这是一个实验性的多架构支持版本，支持 AMD64 和 ARM64 架构。
             
             ## 版本信息
             
@@ -303,12 +305,23 @@ jobs:
             
             ## Docker 镜像
             ```bash
-            # 最新版本
-            docker pull ${{ env.DOCKER_HUB_REPO }}:${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
+            # 最新实验版本
+            docker pull ${{ env.DOCKER_HUB_REPO }}:arm64-latest
             
-            # 或使用 latest 标签
-            docker pull ${{ env.DOCKER_HUB_REPO }}:latest
+            # 或使用指定版本
+            docker pull ${{ env.DOCKER_HUB_REPO }}:arm64-${{ needs.check_versions.outputs.overflow_version }}-mirai.${{ needs.check_versions.outputs.mirai_version }}
             ```
+            
+            ## ⚠️ 实验性功能提醒
+            
+            此版本支持以下架构：
+            - ✅ linux/amd64（x86_64）
+            - 🧪 linux/arm64（ARM64/AArch64）
+            
+            如果您在使用过程中遇到任何问题：
+            1. 请在 [Issues](../../issues) 中报告
+            2. 提供您的设备信息和使用场景
+            3. 附上详细的错误日志
             
             ## Overflow 更新说明
             
@@ -318,7 +331,7 @@ jobs:
             
             ${{ needs.check_versions.outputs.mirai_changelog }}
           draft: false
-          prerelease: false
+          prerelease: true
 
       - name: Update Summary
         if: success()
