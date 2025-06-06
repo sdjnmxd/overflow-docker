@@ -70,6 +70,25 @@ WORKDIR /app/overflow
 COPY start.sh .
 RUN chmod +x start.sh
 
+# 预热依赖
+RUN cd /app/overflow && \
+    mkdir -p plugin-libraries plugin-shared-libraries && \
+    java -cp "./content/*" net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader 2>&1 | tee /tmp/mirai.log & \
+    MIRAI_PID=$! && \
+    while true; do \
+        if grep -q "正在运行" /tmp/mirai.log; then \
+            kill $MIRAI_PID; \
+            break; \
+        fi; \
+        if ! kill -0 $MIRAI_PID 2>/dev/null; then \
+            echo "Mirai进程异常退出"; \
+            exit 1; \
+        fi; \
+        sleep 1; \
+    done && \
+    rm /tmp/mirai.log && \
+    echo "依赖预热完成"
+
 VOLUME ["/app/overflow/data", "/app/overflow/config", "/app/overflow/plugins", "/app/overflow/logs"]
 
 ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"
