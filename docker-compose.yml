@@ -3,33 +3,34 @@ version: '3'
 services:
   mirai-overflow:
     image: sdjnmxd/overflow:latest
+    container_name: mirai-overflow
     volumes:
-      - ./data:/app/mcl/data
-      - ./config:/app/mcl/config
-      - ./plugins:/app/mcl/plugins
-      - ./plugin-libraries:/app/mcl/plugin-libraries
-      - ./logs:/app/mcl/logs
-      - ./overflow.json:/app/mcl/overflow.json
+      - ./bots:/app/overflow/bots  # 机器人账号数据
+      - ./config:/app/overflow/config  # 配置文件
+      - ./data:/app/overflow/data  # 数据文件
+      - ./logs:/app/overflow/logs  # 日志文件
+    ports:
+      - "7827:7827"  # mirai-api-http 端口
     environment:
-      # Java 配置
-      - JAVA_OPTS=${JAVA_OPTS:--Xms512M -Xmx1G}
-      # 时区配置
-      - TZ=${TZ:-Asia/Shanghai}
+      # 必要配置
+      - OVERFLOW_WS_HOST=ws://127.0.0.1:7827  # 改为你的 Onebot 实现的 WebSocket 地址
+      - OVERFLOW_TOKEN=StarBot  # 改为你的 Onebot 实现的访问令牌
+      # 可选配置
+      - TZ=Asia/Shanghai
+      - JAVA_OPTS=-Xms512M -Xmx1G
     restart: unless-stopped
     logging:
-      driver: "json-file"
+      driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
 
 volumes:
-  data:
+  bots:
     driver: local
   config:
     driver: local
-  plugins:
-    driver: local
-  plugin-libraries:
+  data:
     driver: local
   logs:
     driver: local 

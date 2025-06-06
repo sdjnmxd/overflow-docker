@@ -6,78 +6,91 @@
 
 ## 快速开始
 
-从 Docker Hub 拉取镜像并运行：
-
+1. 创建项目目录：
 ```bash
-# 方式一：直接使用 docker-compose（推荐）
-docker-compose pull
-docker-compose up -d
-
-# 方式二：手动拉取镜像
-docker pull sdjnmxd/overflow:latest
+mkdir overflow && cd overflow
 ```
 
-## 环境要求
-
-- Docker
-- Docker Compose
-- 一个可用的 Onebot 实现（如 go-cqhttp、LLOneBot 等）
-
-## 配置指南
-
-### 配置文件
-Overflow 和 Mirai Console 的配置文件存放在以下目录：
-- 数据目录：`./data`（存储机器人数据）
-- 配置目录：`./config`（存储配置文件）
-- 插件目录：`./plugins`（存储插件文件）
-- 日志目录：`./logs`（可选，存储日志文件）
-- 主配置文件：`overflow.json`
-
-其他目录如 `bots`、`content`、`plugin-libraries` 等会由程序自动生成和管理，无需手动维护。
-
-### 环境变量
-本项目支持以下环境变量配置：
-
-```env
-# 时区设置
-TZ=Asia/Shanghai
-
-# Java 虚拟机参数
-JAVA_OPTS=-Xms512M -Xmx1G
-```
-
-## 部署流程
-
-1. 准备必要目录：
+2. 下载配置文件：
 ```bash
-mkdir -p data config plugins
+curl -O https://raw.githubusercontent.com/sdjnmxd/overflow-docker/main/docker-compose.yml
 ```
 
-2. 配置环境变量：
-```bash
-# 创建环境变量文件
-cat > .env << 'EOF'
-# 时区设置
-TZ=Asia/Shanghai
+3. 修改必要配置：
+编辑 `docker-compose.yml`，设置以下环境变量：
+- `OVERFLOW_WS_HOST`：你的 Onebot 实现的 WebSocket 地址
+- `OVERFLOW_TOKEN`：你的 Onebot 实现的访问令牌
 
-# Java 虚拟机参数
-JAVA_OPTS=-Xms512M -Xmx1G
-EOF
-```
-
-3. 启动服务：
+4. 启动服务：
 ```bash
 docker-compose up -d
 ```
 
-4. 配置 Overflow：
-   - 在 `config` 目录中配置 Overflow 连接到 Onebot 实现
-   - 在 Mirai Console 中配置机器人账号
-   - 根据需要安装 Mirai 插件
+就是这么简单！服务启动后，你可以：
+- 查看日志：`docker-compose logs -f`
+- 停止服务：`docker-compose down`
+- 重启服务：`docker-compose restart`
+
+## 目录说明
+
+服务会自动创建以下目录：
+- `bots`：机器人账号数据
+- `config`：配置文件
+- `data`：数据文件
+- `logs`：日志文件
+
+## 配置说明
+
+### 必要配置
+
+| 环境变量 | 说明 | 默认值 |
+|---------|------|--------|
+| OVERFLOW_WS_HOST | Onebot 实现的 WebSocket 地址 | ws://127.0.0.1:7827 |
+| OVERFLOW_TOKEN | Onebot 实现的访问令牌 | StarBot |
+
+### 可选配置
+
+#### 系统配置
+| 环境变量 | 说明 | 默认值 |
+|---------|------|--------|
+| TZ | 时区 | Asia/Shanghai |
+| JAVA_OPTS | Java 虚拟机参数 | -Xms512M -Xmx1G |
+
+#### Overflow 配置
+| 环境变量 | 说明 | 默认值 |
+|---------|------|--------|
+| OVERFLOW_NO_LOG | 关闭日志（开启时不接受漏洞反馈） | false |
+| OVERFLOW_WS_HOST | WebSocket 地址 | ws://127.0.0.1:7827 |
+| OVERFLOW_REVERSED_WS_PORT | 反向 WebSocket 端口 | -1 |
+| OVERFLOW_TOKEN | 访问令牌 | StarBot |
+| OVERFLOW_NO_PLATFORM | 是否禁用平台信息 | false |
+| OVERFLOW_USE_CQ_CODE | 是否使用 CQ 码 | false |
+| OVERFLOW_RETRY_TIMES | 重试次数 | 5 |
+| OVERFLOW_RETRY_WAIT_MILLS | 重试等待时间（毫秒） | 5000 |
+| OVERFLOW_RETRY_REST_MILLS | 重试休息时间（毫秒） | 60000 |
+| OVERFLOW_HEARTBEAT_CHECK_SECONDS | 心跳检查间隔（秒） | 60 |
+| OVERFLOW_USE_GROUP_UPLOAD_EVENT | 是否使用群文件上传事件 | false |
+| OVERFLOW_RESOURCE_CACHE_ENABLED | 是否启用资源缓存 | false |
+| OVERFLOW_RESOURCE_CACHE_DURATION | 资源缓存保留时间（小时） | 168 |
+| OVERFLOW_DROP_EVENTS_BEFORE_CONNECTED | 是否丢弃连接前的事件 | true |
+
+#### mirai-api-http 配置
+| 环境变量 | 说明 | 默认值 |
+|---------|------|--------|
+| MIRAI_ENABLE_VERIFY | 是否启用验证 | true |
+| MIRAI_VERIFY_KEY | 验证密钥 | StarBot |
+| MIRAI_HTTP_HOST | HTTP 服务监听地址 | 0.0.0.0 |
+| MIRAI_HTTP_PORT | HTTP 服务端口 | 7827 |
+| MIRAI_HTTP_CORS | CORS 配置 | * |
+| MIRAI_WS_HOST | WebSocket 服务监听地址 | 0.0.0.0 |
+| MIRAI_WS_PORT | WebSocket 服务端口 | 7827 |
+| MIRAI_HTTP_DEBUG | 是否启用调试模式 | false |
+| MIRAI_SINGLE_MODE | 是否启用单例模式 | false |
+| MIRAI_WS_SYNC_ID | WebSocket 同步 ID | -1 |
 
 ## 本地构建
 
-如果需要本地构建镜像，可以使用以下命令：
+如果需要本地构建镜像：
 
 ```bash
 # 使用默认版本构建
