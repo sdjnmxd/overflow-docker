@@ -1,29 +1,49 @@
 version: '3'
 
 services:
-  mirai-overflow:
+  overflow:
     image: sdjnmxd/overflow:latest
-    container_name: mirai-overflow
-    volumes:
-      - ./bots:/app/overflow/bots  # 机器人账号数据
-      - ./config:/app/overflow/config  # 配置文件
-      - ./data:/app/overflow/data  # 数据文件
-      - ./logs:/app/overflow/logs  # 日志文件
-    ports:
-      - "7827:7827"  # mirai-api-http 端口
+    container_name: overflow
+    restart: unless-stopped
     environment:
       # 必要配置
-      - OVERFLOW_WS_HOST=ws://127.0.0.1:7827  # 改为你的 Onebot 实现的 WebSocket 地址
-      - OVERFLOW_TOKEN=StarBot  # 改为你的 Onebot 实现的访问令牌
-      # 可选配置
-      - TZ=Asia/Shanghai
-      - JAVA_OPTS=-Xms512M -Xmx1G
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - OVERFLOW_WS_HOST=${OVERFLOW_WS_HOST}
+      - OVERFLOW_TOKEN=${OVERFLOW_TOKEN}
+      
+      # 系统配置
+      - TZ=${TZ}
+      - JAVA_OPTS=${JAVA_OPTS}
+      
+      # Overflow 配置
+      - OVERFLOW_NO_LOG=${OVERFLOW_NO_LOG}
+      - OVERFLOW_REVERSED_WS_PORT=${OVERFLOW_REVERSED_WS_PORT}
+      - OVERFLOW_NO_PLATFORM=${OVERFLOW_NO_PLATFORM}
+      - OVERFLOW_USE_CQ_CODE=${OVERFLOW_USE_CQ_CODE}
+      - OVERFLOW_RETRY_TIMES=${OVERFLOW_RETRY_TIMES}
+      - OVERFLOW_RETRY_WAIT_MILLS=${OVERFLOW_RETRY_WAIT_MILLS}
+      - OVERFLOW_RETRY_REST_MILLS=${OVERFLOW_RETRY_REST_MILLS}
+      - OVERFLOW_HEARTBEAT_CHECK_SECONDS=${OVERFLOW_HEARTBEAT_CHECK_SECONDS}
+      - OVERFLOW_USE_GROUP_UPLOAD_EVENT=${OVERFLOW_USE_GROUP_UPLOAD_EVENT}
+      - OVERFLOW_RESOURCE_CACHE_ENABLED=${OVERFLOW_RESOURCE_CACHE_ENABLED}
+      - OVERFLOW_RESOURCE_CACHE_DURATION=${OVERFLOW_RESOURCE_CACHE_DURATION}
+      - OVERFLOW_DROP_EVENTS_BEFORE_CONNECTED=${OVERFLOW_DROP_EVENTS_BEFORE_CONNECTED}
+      
+      # mirai-api-http 配置
+      - MIRAI_ENABLE_VERIFY=${MIRAI_ENABLE_VERIFY}
+      - MIRAI_VERIFY_KEY=${MIRAI_VERIFY_KEY}
+      - MIRAI_HTTP_HOST=${MIRAI_HTTP_HOST}
+      - MIRAI_HTTP_PORT=${MIRAI_HTTP_PORT}
+      - MIRAI_HTTP_CORS=${MIRAI_HTTP_CORS}
+      - MIRAI_WS_HOST=${MIRAI_WS_HOST}
+      - MIRAI_WS_PORT=${MIRAI_WS_PORT}
+      - MIRAI_HTTP_DEBUG=${MIRAI_HTTP_DEBUG}
+      - MIRAI_SINGLE_MODE=${MIRAI_SINGLE_MODE}
+      - MIRAI_WS_SYNC_ID=${MIRAI_WS_SYNC_ID}
+    volumes:
+      - ./bots:/app/bots
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./logs:/app/logs
 
 volumes:
   bots:

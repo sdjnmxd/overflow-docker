@@ -6,30 +6,35 @@
 
 ## 快速开始
 
-1. 创建项目目录：
+1. 创建项目目录并下载配置文件：
 ```bash
+# 创建并进入项目目录
 mkdir overflow && cd overflow
-```
 
-2. 下载配置文件：
-```bash
+# 下载配置文件
 curl -O https://raw.githubusercontent.com/sdjnmxd/overflow-docker/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/sdjnmxd/overflow-docker/main/env.example
 ```
 
-3. 修改必要配置：
-编辑 `docker-compose.yml`，设置以下环境变量：
-- `OVERFLOW_WS_HOST`：你的 Onebot 实现的 WebSocket 地址
-- `OVERFLOW_TOKEN`：你的 Onebot 实现的访问令牌
-
-4. 启动服务：
+2. 配置必要的环境变量：
 ```bash
-docker-compose up -d
+# 复制环境变量示例文件
+cp env.example .env
+
+# 编辑 .env 文件，填入你的配置
+vim .env  # 或使用其他编辑器
 ```
 
-就是这么简单！服务启动后，你可以：
-- 查看日志：`docker-compose logs -f`
-- 停止服务：`docker-compose down`
-- 重启服务：`docker-compose restart`
+3. 启动服务：
+```bash
+docker compose up -d
+```
+
+服务启动后，你可以：
+- 查看日志：`docker compose logs -f`
+- 停止服务：`docker compose down`
+- 重启服务：`docker compose restart`
+- 更新版本：`docker compose pull && docker compose up -d`
 
 ## 目录说明
 
