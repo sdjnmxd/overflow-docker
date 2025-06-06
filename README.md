@@ -4,6 +4,13 @@
 
 这是 [Overflow](https://github.com/MrXiaoM/Overflow) 的 Docker 部署配置，提供了一个开箱即用的 Mirai Console + Overflow 容器化部署方案。
 
+> 🧪 **实验性功能**
+>
+> - ARM64 支持正在开发中！如果您使用 ARM64 设备（如 Apple M1/M2 Mac、树莓派等），可以：
+>   - 查看 [ARM64 支持分支](https://github.com/sdjnmxd/overflow-docker/tree/feature/arm64-support)
+>   - 下载 [实验性版本](https://github.com/sdjnmxd/overflow-docker/releases?q=arm64&expanded=true)
+>   - 参与测试和反馈
+
 ## 快速开始
 
 1. 创建项目目录并下载配置文件：
@@ -135,6 +142,7 @@ docker build -t overflow \
 ## 支持架构
 
 - linux/amd64
+- linux/arm64 (实验性支持，查看 [ARM64 分支](https://github.com/sdjnmxd/overflow-docker/tree/feature/arm64-support))
 
 ## 问题反馈
 
