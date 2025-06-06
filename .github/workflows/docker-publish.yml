@@ -218,10 +218,12 @@ jobs:
 
   build:
     needs: check_versions
-    if: ${{ needs.check_versions.outputs.needs_update == 'true' || github.event.inputs.force_build == 'true' }}
+    if: |
+      needs.check_versions.outputs.needs_update == 'true' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up QEMU
