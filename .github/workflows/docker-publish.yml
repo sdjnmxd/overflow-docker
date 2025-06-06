@@ -35,8 +35,8 @@ on:
         required: true
 
 permissions:
-  contents: write
-  packages: write
+  contents: write  # 用于更新 README 和创建 release
+  packages: write  # 用于推送 Docker 镜像
 
 env:
   IMAGE_NAME: overflow
@@ -191,6 +191,22 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
           
+          # 检查版本号是否为空
+          if [ -z "${OVERFLOW_VERSION}" ]; then
+            echo "::error::Overflow 版本号不能为空"
+            exit 1
+          fi
+          
+          if [ -z "${MIRAI_VERSION}" ]; then
+            echo "::error::Mirai 版本号不能为空"
+            exit 1
+          fi
+          
+          if [ -z "${BOUNCYCASTLE_VERSION}" ]; then
+            echo "::error::BouncyCastle 版本号不能为空"
+            exit 1
+          fi
+          
           echo "Using Overflow version: ${OVERFLOW_VERSION}"
           echo "Using Mirai version: ${MIRAI_VERSION}"
           echo "Using BouncyCastle version: ${BOUNCYCASTLE_VERSION}"
@@ -203,16 +219,6 @@ jobs:
       (github.event_name == 'workflow_dispatch' && github.event.inputs.force_build == 'true')
     runs-on: ubuntu-latest
     steps:
-      - name: Check versions
-        run: |
-          if [ -z "${{ needs.check_versions.outputs.overflow_version }}" ] || [ -z "${{ needs.check_versions.outputs.mirai_version }}" ]; then
-            echo "::error::版本号不能为空 (Overflow: ${{ needs.check_versions.outputs.overflow_version }}, Mirai: ${{ needs.check_versions.outputs.mirai_version }})"
-            exit 1
-          fi
-          echo "Versions to build:"
-          echo "Overflow: ${{ needs.check_versions.outputs.overflow_version }}"
-          echo "Mirai: ${{ needs.check_versions.outputs.mirai_version }}"
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -245,6 +251,23 @@ jobs:
             ${{ env.DOCKER_HUB_REPO }}:${{ env.OVERFLOW_VERSION }}-mirai.${{ env.MIRAI_VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Update README versions
+        if: success()
+        run: |
+          # 更新版本信息
+          sed -i "s/Overflow Core: .*/Overflow Core: ${{ env.OVERFLOW_VERSION }}/" README.md
+          sed -i "s/Mirai Console: .*/Mirai Console: ${{ env.MIRAI_VERSION }}/" README.md
+          sed -i "s/BouncyCastle: .*/BouncyCastle: ${{ env.BOUNCYCASTLE_VERSION }}/" README.md
+          
+          # 配置 Git
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 提交更改
+          git add README.md
+          git commit -m "chore: 更新版本信息 [skip ci]" || echo "No changes to commit"
+          git push
 
       - name: Create Release
         if: |
