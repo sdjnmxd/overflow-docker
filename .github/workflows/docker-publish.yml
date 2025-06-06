@@ -87,7 +87,7 @@ jobs:
               exit 1
             fi
             echo "获取到 Overflow 最新版本: ${OVERFLOW_VERSION}"
-            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/latest"
+            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/v${OVERFLOW_VERSION}"
             CHANGELOG=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.body')
             RELEASE_DATE=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.published_at')
           else
@@ -97,7 +97,7 @@ jobs:
               echo "::error::指定的 Overflow 版本号无效"
               exit 1
             fi
-            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/${OVERFLOW_VERSION}"
+            RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/v${OVERFLOW_VERSION}"
             # 获取指定版本的release信息
             RELEASE_INFO=$(curl -s "https://api.github.com/repos/MrXiaoM/Overflow/releases/tags/${OVERFLOW_VERSION}")
             if [ "$(echo "$RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
@@ -119,7 +119,7 @@ jobs:
               exit 1
             fi
             echo "获取到 Mirai 最新版本: ${MIRAI_VERSION}"
-            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/latest"
+            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/v${MIRAI_VERSION}"
             MIRAI_CHANGELOG=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.body')
             MIRAI_RELEASE_DATE=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.published_at')
           else
@@ -129,7 +129,7 @@ jobs:
               echo "::error::指定的 Mirai 版本号无效"
               exit 1
             fi
-            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/${MIRAI_VERSION}"
+            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/v${MIRAI_VERSION}"
             # 获取指定版本的release信息
             MIRAI_RELEASE_INFO=$(curl -s "https://api.github.com/repos/mamoe/mirai/releases/tags/${MIRAI_VERSION}")
             if [ "$(echo "$MIRAI_RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
