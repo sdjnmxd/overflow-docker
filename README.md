@@ -131,23 +131,6 @@ docker build -t overflow \
 
 - linux/amd64
 
-## 常用命令
-
-```bash
-# 查看日志
-docker-compose logs -f overflow
-
-# 停止服务
-docker-compose down
-
-# 更新版本
-docker-compose pull
-docker-compose up -d
-
-# 重启服务
-docker-compose restart
-```
-
 ## 问题反馈
 
 如果您在使用过程中遇到任何问题或有改进建议，欢迎通过以下方式反馈：
