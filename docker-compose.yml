@@ -40,10 +40,10 @@ services:
       - MIRAI_SINGLE_MODE=${MIRAI_SINGLE_MODE}
       - MIRAI_WS_SYNC_ID=${MIRAI_WS_SYNC_ID}
     volumes:
-      - ./bots:/app/bots
-      - ./config:/app/config
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - ./bots:/app/overflow/bots
+      - ./config:/app/overflow/config
+      - ./data:/app/overflow/data
+      - ./logs:/app/overflow/logs
 
 volumes:
   bots:
