@@ -142,23 +142,17 @@ jobs:
             fi
           fi
           
-          # 获取 Docker Hub 当前版本
-          if ! CURRENT_OVERFLOW_VERSION=$(curl -sf "https://hub.docker.com/v2/repositories/${{ env.DOCKER_HUB_REPO }}/tags/" | \
-            jq -r '.results[] | select(.name != "latest") | .name' | head -n1); then
-            echo "::warning::Failed to fetch Docker Hub version, assuming first build"
-            CURRENT_OVERFLOW_VERSION="0.0.0"
-          fi
-          
-          # 如果没有找到版本号（可能是首次构建）
+          # 获取上一个 Overflow 版本
+          CURRENT_OVERFLOW_VERSION=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases | jq -r '.[1].tag_name' | sed 's/^v//')
           if [ -z "$CURRENT_OVERFLOW_VERSION" ] || [ "$CURRENT_OVERFLOW_VERSION" == "null" ]; then
-            echo "No version found in Docker Hub, assuming first build"
+            echo "::warning::Failed to fetch previous Overflow version, assuming first build"
             CURRENT_OVERFLOW_VERSION="0.0.0"
           fi
 
-          # 从当前版本中提取 Mirai 版本
-          if [[ "$CURRENT_OVERFLOW_VERSION" =~ -mirai\.(.*) ]]; then
-            CURRENT_MIRAI_VERSION="${BASH_REMATCH[1]}"
-          else
+          # 获取上一个 Mirai 版本
+          CURRENT_MIRAI_VERSION=$(curl -s https://api.github.com/repos/mamoe/mirai/releases | jq -r '.[1].tag_name' | sed 's/^v//')
+          if [ -z "$CURRENT_MIRAI_VERSION" ] || [ "$CURRENT_MIRAI_VERSION" == "null" ]; then
+            echo "::warning::Failed to fetch previous Mirai version, assuming first build"
             CURRENT_MIRAI_VERSION="0.0.0"
           fi
           
