@@ -143,16 +143,16 @@ jobs:
           fi
           
           # 获取上一个 Overflow 版本
-          CURRENT_OVERFLOW_VERSION=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases | jq -r '.[1].tag_name' | sed 's/^v//')
+          CURRENT_OVERFLOW_VERSION=$(curl -s https://api.github.com/repos/MrXiaoM/Overflow/releases/latest | jq -r '.tag_name' | sed 's/^v//')
           if [ -z "$CURRENT_OVERFLOW_VERSION" ] || [ "$CURRENT_OVERFLOW_VERSION" == "null" ]; then
-            echo "::warning::Failed to fetch previous Overflow version, assuming first build"
+            echo "::warning::Failed to fetch current Overflow version, assuming first build"
             CURRENT_OVERFLOW_VERSION="0.0.0"
           fi
 
           # 获取上一个 Mirai 版本
-          CURRENT_MIRAI_VERSION=$(curl -s https://api.github.com/repos/mamoe/mirai/releases | jq -r '.[1].tag_name' | sed 's/^v//')
+          CURRENT_MIRAI_VERSION=$(curl -s https://api.github.com/repos/mamoe/mirai/releases/latest | jq -r '.tag_name' | sed 's/^v//')
           if [ -z "$CURRENT_MIRAI_VERSION" ] || [ "$CURRENT_MIRAI_VERSION" == "null" ]; then
-            echo "::warning::Failed to fetch previous Mirai version, assuming first build"
+            echo "::warning::Failed to fetch current Mirai version, assuming first build"
             CURRENT_MIRAI_VERSION="0.0.0"
           fi
           
