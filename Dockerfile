@@ -59,10 +59,10 @@ ARG MIRAI_VERSION
 ARG BOUNCYCASTLE_VERSION
 
 # for debug
-ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
-ARG OVERFLOW_VERSION=1.0.5
-ARG MIRAI_VERSION=2.16.0
-ARG BOUNCYCASTLE_VERSION=1.64
+#ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
+#ARG OVERFLOW_VERSION=1.0.5
+#ARG MIRAI_VERSION=2.16.0
+#ARG BOUNCYCASTLE_VERSION=1.64
 
 # 下载核心依赖
 RUN cd content \

@@ -115,13 +115,6 @@ docker build -t overflow \
   --build-arg MIRAI_VERSION=2.16.0 \
   --build-arg BOUNCYCASTLE_VERSION=1.64 .
 ```
-
-默认参数：
-- Maven仓库: https://mirrors.huaweicloud.com/repository/maven
-- Overflow: 1.0.5
-- Mirai Console: 2.16.0
-- BouncyCastle: 1.64
-
 这些参数可以在构建时通过 `--build-arg` 参数覆盖。
 
 ## 版本管理
