@@ -102,7 +102,7 @@ jobs:
             fi
             RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/v${OVERFLOW_VERSION}"
             # 获取指定版本的release信息
-            RELEASE_INFO=$(curl -s "https://api.github.com/repos/MrXiaoM/Overflow/releases/tags/${OVERFLOW_VERSION}")
+            RELEASE_INFO=$(curl -s "https://api.github.com/repos/MrXiaoM/Overflow/releases/tags/v${OVERFLOW_VERSION}")
             if [ "$(echo "$RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
               echo "::warning::无法获取版本 ${OVERFLOW_VERSION} 的发布信息"
               CHANGELOG="手动指定版本构建（无法获取发布信息）"
@@ -134,7 +134,7 @@ jobs:
             fi
             MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/v${MIRAI_VERSION}"
             # 获取指定版本的release信息
-            MIRAI_RELEASE_INFO=$(curl -s "https://api.github.com/repos/mamoe/mirai/releases/tags/${MIRAI_VERSION}")
+            MIRAI_RELEASE_INFO=$(curl -s "https://api.github.com/repos/mamoe/mirai/releases/tags/v${MIRAI_VERSION}")
             if [ "$(echo "$MIRAI_RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
               echo "::warning::无法获取Mirai版本 ${MIRAI_VERSION} 的发布信息"
               MIRAI_CHANGELOG="手动指定版本构建（无法获取发布信息）"
