@@ -28,7 +28,7 @@ cat /app/overflow/config/net.mamoe.mirai-api-http/setting.yml
 
 # 启动程序
 cd /app/overflow
-cat "$FIFO_FILE" | java -cp "./content/*" net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader &
+cat "$FIFO_FILE" | java ${JAVA_OPTS:-} -cp "./content/*" net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader &
 mirai_pid=$!
 
 # 等待程序退出

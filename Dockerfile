@@ -87,7 +87,7 @@ RUN cd plugins \
        "https://github.com/project-mirai/mirai-api-http/releases/download/${LATEST_TAG}/mirai-api-http-${LATEST_TAG#v}.mirai2.jar"
 
 # 预热依赖
-RUN java -cp "./content/*" net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader 2>&1 | tee /tmp/mirai.log & \
+RUN java -Doverflow.skip-token-security-check=I_KNOW_WHAT_I_AM_DOING ${JAVA_OPTS:-} -cp "./content/*" net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader 2>&1 | tee /tmp/mirai.log & \
     MIRAI_PID=$! && \
     while true; do \
         if grep -q "正在运行" /tmp/mirai.log; then \

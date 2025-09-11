@@ -68,6 +68,8 @@ docker compose up -d
 | TZ | 时区 | Asia/Shanghai |
 | JAVA_OPTS | Java 虚拟机参数 | -Xms512M -Xmx1G |
 
+> **注意**: 在 Docker 构建的预热阶段会自动添加 `-Doverflow.skip-token-security-check=I_KNOW_WHAT_I_AM_DOING` 参数以跳过 Overflow 的 token 安全校验，这是为了在容器构建时正常完成依赖预热所必需的。运行时不会添加此参数。
+
 #### Overflow 配置
 | 环境变量 | 说明 | 默认值 |
 |---------|------|--------|
