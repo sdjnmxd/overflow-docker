@@ -56,6 +56,7 @@ RUN chmod +x start.sh
 ARG MAVEN_REPO
 ARG OVERFLOW_VERSION
 ARG MIRAI_VERSION
+ARG MIRAI_HTTP_VERSION
 ARG BOUNCYCASTLE_VERSION
 
 # for debug
@@ -81,14 +82,15 @@ RUN cd content \
 
 # 下载插件
 RUN cd plugins \
-    && LATEST_TAG=$(curl -s https://api.github.com/repos/project-mirai/mirai-api-http/releases/latest | jq -r '.tag_name') \
-    && echo "检测到 mirai-api-http 最新版本 tag: ${LATEST_TAG}" \
+    && echo "下载 mirai-api-http-${MIRAI_HTTP_VERSION#v}.mirai2.jar..." \
     && wget --no-check-certificate --progress=bar:force:noscroll \
-       "https://github.com/project-mirai/mirai-api-http/releases/download/${LATEST_TAG}/mirai-api-http-${LATEST_TAG#v}.mirai2.jar"
+       "https://github.com/project-mirai/mirai-api-http/releases/download/${MIRAI_HTTP_VERSION}/mirai-api-http-${MIRAI_HTTP_VERSION#v}.mirai2.jar"
 
 # 预热依赖
 RUN java -Doverflow.skip-token-security-check=I_KNOW_WHAT_I_AM_DOING ${JAVA_OPTS:-} -cp "./content/*" net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader 2>&1 | tee /tmp/mirai.log & \
     MIRAI_PID=$! && \
+    TIMEOUT=300 && \
+    ELAPSED=0 && \
     while true; do \
         if grep -q "正在运行" /tmp/mirai.log; then \
             kill $MIRAI_PID; \
@@ -98,7 +100,13 @@ RUN java -Doverflow.skip-token-security-check=I_KNOW_WHAT_I_AM_DOING ${JAVA_OPTS
             echo "Mirai进程异常退出"; \
             exit 1; \
         fi; \
+        if [ "$ELAPSED" -ge "$TIMEOUT" ]; then \
+            echo "等待Mirai启动超时（${TIMEOUT}秒），终止进程"; \
+            kill $MIRAI_PID 2>/dev/null || true; \
+            exit 1; \
+        fi; \
         sleep 1; \
+        ELAPSED=$((ELAPSED + 1)); \
     done && \
     rm /tmp/mirai.log && \
     echo "依赖预热完成"
