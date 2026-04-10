@@ -35,18 +35,18 @@ WORKDIR /app/overflow
 RUN chmod +x start.sh
 
 # 构建参数
-#ARG MAVEN_REPO
-#ARG OVERFLOW_VERSION
-#ARG BOUNCYCASTLE_VERSION
-
-# for debug
-ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
-ARG OVERFLOW_VERSION=1.1.0
-ARG BOUNCYCASTLE_VERSION=1.64
+ARG MAVEN_REPO
+ARG OVERFLOW_VERSION
+ARG BOUNCYCASTLE_VERSION
 # Mirai Console 固定为 2.16.0（上游已长期无新版本）
 # mirai-api-http 插件固定 release（上游已长期无新版本）
 ARG MIRAI_API_HTTP_TAG=v2.10.0
 ARG MIRAI_API_HTTP_VER=2.10.0
+
+# for debug
+# ARG MAVEN_REPO=https://mirrors.huaweicloud.com/repository/maven
+# ARG OVERFLOW_VERSION=1.1.0
+# ARG BOUNCYCASTLE_VERSION=1.64
 
 # 下载核心依赖
 RUN cd content \
