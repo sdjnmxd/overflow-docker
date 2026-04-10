@@ -132,7 +132,7 @@ docker build -t overflow \
 - `x.y.z-mirai.a.b.c`: 特定版本号，对应 Overflow 和 Mirai Console 的发布版本
 
 当前集成的组件版本：
-- Overflow Core: 1.0.9
+- Overflow Core: 1.1.0
 - Mirai Console: 2.16.0
 - mirai-api-http 插件: v2.10.0
 - BouncyCastle: 1.64
