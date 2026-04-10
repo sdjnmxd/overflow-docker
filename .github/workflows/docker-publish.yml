@@ -9,10 +9,6 @@ on:
         description: 'Overflow版本号（可选，默认使用最新版本）'
         required: false
         type: string
-      mirai_version:
-        description: 'Mirai版本号（可选，默认使用最新版本）'
-        required: false
-        type: string
       bouncycastle_version:
         description: 'BouncyCastle版本号（可选，默认使用1.64）'
         required: false
@@ -56,10 +52,8 @@ jobs:
       current_mirai_version: ${{ steps.check.outputs.current_mirai_version }}
       release_date: ${{ steps.check.outputs.release_date }}
       release_url: ${{ steps.check.outputs.release_url }}
-      mirai_release_date: ${{ steps.check.outputs.mirai_release_date }}
       mirai_release_url: ${{ steps.check.outputs.mirai_release_url }}
       changelog: ${{ steps.check.outputs.changelog }}
-      mirai_changelog: ${{ steps.check.outputs.mirai_changelog }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -117,47 +111,10 @@ jobs:
             fi
           fi
           
-          # 如果没有指定Mirai版本，则获取最新版本
-          if [ -z "${{ github.event.inputs.mirai_version }}" ]; then
-            echo "自动获取 Mirai 最新版本"
-            MIRAI_RELEASE_INFO=$(gh api repos/mamoe/mirai/releases/latest)
-            MIRAI_VERSION=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.tag_name' | sed 's/v//')
-            if [ -z "$MIRAI_VERSION" ] || [ "$MIRAI_VERSION" = "null" ]; then
-              echo "::error::无法获取 Mirai 最新版本"
-              exit 1
-            fi
-            echo "获取到 Mirai 最新版本: ${MIRAI_VERSION}"
-            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/v${MIRAI_VERSION}"
-            MIRAI_CHANGELOG=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.body')
-            MIRAI_RELEASE_DATE=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.published_at')
-          else
-            echo "使用指定的 Mirai 版本: ${{ github.event.inputs.mirai_version }}"
-            MIRAI_VERSION=${{ github.event.inputs.mirai_version }}
-            if [ -z "$MIRAI_VERSION" ]; then
-              echo "::error::指定的 Mirai 版本号无效"
-              exit 1
-            fi
-            MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/v${MIRAI_VERSION}"
-            # 获取指定版本的release信息
-            MIRAI_RELEASE_INFO=$(gh api "repos/mamoe/mirai/releases/tags/v${MIRAI_VERSION}")
-            if [ "$(echo "$MIRAI_RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
-              echo "::warning::无法获取Mirai版本 ${MIRAI_VERSION} 的发布信息"
-              MIRAI_CHANGELOG="手动指定版本构建（无法获取发布信息）"
-              MIRAI_RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            else
-              MIRAI_CHANGELOG=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.body')
-              MIRAI_RELEASE_DATE=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.published_at')
-            fi
-          fi
-
-          # 获取 mirai-api-http 最新版本
-          echo "自动获取 mirai-api-http 最新版本"
-          MIRAI_HTTP_VERSION=$(gh api repos/project-mirai/mirai-api-http/releases/latest | jq -r '.tag_name')
-          if [ -z "$MIRAI_HTTP_VERSION" ] || [ "$MIRAI_HTTP_VERSION" = "null" ]; then
-            echo "::error::无法获取 mirai-api-http 最新版本"
-            exit 1
-          fi
-          echo "获取到 mirai-api-http 最新版本: ${MIRAI_HTTP_VERSION}"
+          # Mirai Console 与 mirai-api-http 与 Dockerfile 中 ARG 一致（上游已长期无新版本），不查 API
+          MIRAI_VERSION="2.16.0"
+          MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/v${MIRAI_VERSION}"
+          MIRAI_HTTP_VERSION="v2.10.0"
           
           # 从 README.md 中获取当前记录的 Overflow 版本
           CURRENT_OVERFLOW_VERSION=$(grep "Overflow Core:" README.md | sed 's/.*Overflow Core: //' | sed 's/ *$//')
@@ -175,12 +132,12 @@ jobs:
           fi
           echo "当前记录的 Mirai 版本: ${CURRENT_MIRAI_VERSION}"
           
-          # 比较版本
-          if [ "$OVERFLOW_VERSION" != "$CURRENT_OVERFLOW_VERSION" ] || [ "$MIRAI_VERSION" != "$CURRENT_MIRAI_VERSION" ]; then
-            echo "Update needed: $CURRENT_OVERFLOW_VERSION (mirai: $CURRENT_MIRAI_VERSION) -> $OVERFLOW_VERSION (mirai: $MIRAI_VERSION)"
+          # 比较版本（仅 Overflow 驱动自动构建；Mirai 因上游已长期无新版本而固定，不参与是否出镜像的判断）
+          if [ "$OVERFLOW_VERSION" != "$CURRENT_OVERFLOW_VERSION" ]; then
+            echo "Update needed: Overflow $CURRENT_OVERFLOW_VERSION -> $OVERFLOW_VERSION (Mirai ${MIRAI_VERSION}，上游已长期无新版本故固定)"
             echo "needs_update=true" >> $GITHUB_OUTPUT
           else
-            echo "No update needed, current version is latest: $CURRENT_OVERFLOW_VERSION (mirai: $CURRENT_MIRAI_VERSION)"
+            echo "No update needed: Overflow 已为最新 $CURRENT_OVERFLOW_VERSION（Mirai ${MIRAI_VERSION}，上游已长期无新版本故固定）"
             echo "needs_update=false" >> $GITHUB_OUTPUT
           fi
           
@@ -195,13 +152,9 @@ jobs:
             echo "maven_repo=${MAVEN_REPO}"
             echo "release_date=${RELEASE_DATE}"
             echo "release_url=${RELEASE_URL}"
-            echo "mirai_release_date=${MIRAI_RELEASE_DATE}"
             echo "mirai_release_url=${MIRAI_RELEASE_URL}"
             echo "changelog<<EOF"
             echo "${CHANGELOG}"
-            echo "EOF"
-            echo "mirai_changelog<<EOF"
-            echo "${MIRAI_CHANGELOG}"
             echo "EOF"
           } >> $GITHUB_OUTPUT
           
@@ -260,8 +213,6 @@ jobs:
           build-args: |
             MAVEN_REPO=${{ env.MAVEN_REPO }}
             OVERFLOW_VERSION=${{ env.OVERFLOW_VERSION }}
-            MIRAI_VERSION=${{ env.MIRAI_VERSION }}
-            MIRAI_HTTP_VERSION=${{ env.MIRAI_HTTP_VERSION }}
             BOUNCYCASTLE_VERSION=${{ env.BOUNCYCASTLE_VERSION }}
           tags: |
             ${{ env.DOCKER_HUB_REPO }}:latest
@@ -309,9 +260,7 @@ jobs:
             - Release 链接: ${{ needs.check_versions.outputs.release_url }}
             
             ### Mirai
-            - 版本: ${{ needs.check_versions.outputs.current_mirai_version }} -> ${{ needs.check_versions.outputs.mirai_version }}
-            - 发布时间: ${{ needs.check_versions.outputs.mirai_release_date }}
-            - Release 链接: ${{ needs.check_versions.outputs.mirai_release_url }}
+            - Console ${{ needs.check_versions.outputs.mirai_version }}（固定，[上游](https://github.com/mamoe/mirai)已长期无新版本） · ${{ needs.check_versions.outputs.mirai_release_url }}
             
             ### 其他信息
             - BouncyCastle: ${{ needs.check_versions.outputs.bouncycastle_version }}
@@ -329,10 +278,6 @@ jobs:
             ## Overflow 更新说明
             
             ${{ needs.check_versions.outputs.changelog }}
-            
-            ## Mirai 更新说明
-            
-            ${{ needs.check_versions.outputs.mirai_changelog }}
           draft: false
           prerelease: false
 
