@@ -66,6 +66,8 @@ jobs:
         
       - name: Get latest versions
         id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 设置默认值
           BOUNCYCASTLE_VERSION="${{ github.event.inputs.bouncycastle_version }}"
@@ -82,12 +84,10 @@ jobs:
           echo "- BouncyCastle版本: ${BOUNCYCASTLE_VERSION}"
           echo "- Maven仓库: ${MAVEN_REPO}"
           
-          GH_AUTH_HEADER="Authorization: token ${{ secrets.GITHUB_TOKEN }}"
-
           # 如果没有指定Overflow版本，则获取最新版本
           if [ -z "${{ github.event.inputs.overflow_version }}" ]; then
             echo "自动获取 Overflow 最新版本"
-            OVERFLOW_RELEASE_INFO=$(curl -s -H "${GH_AUTH_HEADER}" https://api.github.com/repos/MrXiaoM/Overflow/releases/latest)
+            OVERFLOW_RELEASE_INFO=$(gh api repos/MrXiaoM/Overflow/releases/latest)
             OVERFLOW_VERSION=$(echo "$OVERFLOW_RELEASE_INFO" | jq -r '.tag_name' | sed 's/^v//')
             if [ -z "$OVERFLOW_VERSION" ] || [ "$OVERFLOW_VERSION" = "null" ]; then
               echo "::error::无法获取 Overflow 最新版本"
@@ -106,7 +106,7 @@ jobs:
             fi
             RELEASE_URL="https://github.com/MrXiaoM/Overflow/releases/tag/v${OVERFLOW_VERSION}"
             # 获取指定版本的release信息
-            RELEASE_INFO=$(curl -s -H "${GH_AUTH_HEADER}" "https://api.github.com/repos/MrXiaoM/Overflow/releases/tags/v${OVERFLOW_VERSION}")
+            RELEASE_INFO=$(gh api "repos/MrXiaoM/Overflow/releases/tags/v${OVERFLOW_VERSION}")
             if [ "$(echo "$RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
               echo "::warning::无法获取版本 ${OVERFLOW_VERSION} 的发布信息"
               CHANGELOG="手动指定版本构建（无法获取发布信息）"
@@ -120,7 +120,7 @@ jobs:
           # 如果没有指定Mirai版本，则获取最新版本
           if [ -z "${{ github.event.inputs.mirai_version }}" ]; then
             echo "自动获取 Mirai 最新版本"
-            MIRAI_RELEASE_INFO=$(curl -s -H "${GH_AUTH_HEADER}" https://api.github.com/repos/mamoe/mirai/releases/latest)
+            MIRAI_RELEASE_INFO=$(gh api repos/mamoe/mirai/releases/latest)
             MIRAI_VERSION=$(echo "$MIRAI_RELEASE_INFO" | jq -r '.tag_name' | sed 's/v//')
             if [ -z "$MIRAI_VERSION" ] || [ "$MIRAI_VERSION" = "null" ]; then
               echo "::error::无法获取 Mirai 最新版本"
@@ -139,7 +139,7 @@ jobs:
             fi
             MIRAI_RELEASE_URL="https://github.com/mamoe/mirai/releases/tag/v${MIRAI_VERSION}"
             # 获取指定版本的release信息
-            MIRAI_RELEASE_INFO=$(curl -s -H "${GH_AUTH_HEADER}" "https://api.github.com/repos/mamoe/mirai/releases/tags/v${MIRAI_VERSION}")
+            MIRAI_RELEASE_INFO=$(gh api "repos/mamoe/mirai/releases/tags/v${MIRAI_VERSION}")
             if [ "$(echo "$MIRAI_RELEASE_INFO" | jq -r '.message')" = "Not Found" ]; then
               echo "::warning::无法获取Mirai版本 ${MIRAI_VERSION} 的发布信息"
               MIRAI_CHANGELOG="手动指定版本构建（无法获取发布信息）"
@@ -152,7 +152,7 @@ jobs:
 
           # 获取 mirai-api-http 最新版本
           echo "自动获取 mirai-api-http 最新版本"
-          MIRAI_HTTP_VERSION=$(curl -s -H "${GH_AUTH_HEADER}" https://api.github.com/repos/project-mirai/mirai-api-http/releases/latest | jq -r '.tag_name')
+          MIRAI_HTTP_VERSION=$(gh api repos/project-mirai/mirai-api-http/releases/latest | jq -r '.tag_name')
           if [ -z "$MIRAI_HTTP_VERSION" ] || [ "$MIRAI_HTTP_VERSION" = "null" ]; then
             echo "::error::无法获取 mirai-api-http 最新版本"
             exit 1
