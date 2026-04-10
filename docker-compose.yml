@@ -6,9 +6,13 @@ services:
     container_name: overflow
     restart: unless-stopped
     environment:
-      # 必要配置
-      - OVERFLOW_WS_HOST=${OVERFLOW_WS_HOST}
-      - OVERFLOW_TOKEN=${OVERFLOW_TOKEN}
+      # Overflow connections（与上游 overflow.json 一致，见 README）
+      # 多实例：设置 OVERFLOW_CONNECTIONS_JSON 后，下方单条连接变量不生效
+      - OVERFLOW_CONNECTIONS_JSON=${OVERFLOW_CONNECTIONS_JSON}
+      - OVERFLOW_CONNECTION_TYPE=${OVERFLOW_CONNECTION_TYPE}
+      - OVERFLOW_CONNECTION_HOST=${OVERFLOW_CONNECTION_HOST}
+      - OVERFLOW_CONNECTION_PORT=${OVERFLOW_CONNECTION_PORT}
+      - OVERFLOW_CONNECTION_TOKEN=${OVERFLOW_CONNECTION_TOKEN}
       
       # 系统配置
       - TZ=${TZ}
@@ -16,7 +20,6 @@ services:
       
       # Overflow 配置
       - OVERFLOW_NO_LOG=${OVERFLOW_NO_LOG}
-      - OVERFLOW_REVERSED_WS_PORT=${OVERFLOW_REVERSED_WS_PORT}
       - OVERFLOW_NO_PLATFORM=${OVERFLOW_NO_PLATFORM}
       - OVERFLOW_USE_CQ_CODE=${OVERFLOW_USE_CQ_CODE}
       - OVERFLOW_RETRY_TIMES=${OVERFLOW_RETRY_TIMES}

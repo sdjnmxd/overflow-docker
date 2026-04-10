@@ -1,8 +1,26 @@
 {
     "no_log___DO_NOT_REPORT_IF_YOU_SWITCH_THIS_ON___开启此选项时不接受漏洞反馈": {{ default .Env.OVERFLOW_NO_LOG "false" }},
-    "ws_host": "{{ default .Env.OVERFLOW_WS_HOST "ws://127.0.0.1:7827" }}",
-    "reversed_ws_port": {{ default .Env.OVERFLOW_REVERSED_WS_PORT "-1" }},
-    "token": "{{ default .Env.OVERFLOW_TOKEN "StarBot" }}",
+    "connections": {{- if .Env.OVERFLOW_CONNECTIONS_JSON }}
+{{ .Env.OVERFLOW_CONNECTIONS_JSON }}
+{{- else }}
+        [
+{{- if eq (default .Env.OVERFLOW_CONNECTION_TYPE "websocket") "websocket-reverse" }}
+        {
+            "enable": true,
+            "type": "websocket-reverse",
+            "port": {{ default .Env.OVERFLOW_CONNECTION_PORT "3002" }},
+            "token": "{{ default .Env.OVERFLOW_CONNECTION_TOKEN "StarBot" }}"
+        }
+{{- else }}
+        {
+            "enable": true,
+            "type": "websocket",
+            "host": "{{ default .Env.OVERFLOW_CONNECTION_HOST "ws://127.0.0.1:3001" }}",
+            "token": "{{ default .Env.OVERFLOW_CONNECTION_TOKEN "StarBot" }}"
+        }
+{{- end }}
+        ]
+{{- end }},
     "no_platform": {{ default .Env.OVERFLOW_NO_PLATFORM "false" }},
     "use_cq_code": {{ default .Env.OVERFLOW_USE_CQ_CODE "false" }},
     "retry_times": {{ default .Env.OVERFLOW_RETRY_TIMES "5" }},
@@ -15,4 +33,4 @@
         "keep_duration_hours": {{ default .Env.OVERFLOW_RESOURCE_CACHE_DURATION "168" }}
     },
     "drop_events_before_connected": {{ default .Env.OVERFLOW_DROP_EVENTS_BEFORE_CONNECTED "true" }}
-} 
+}
